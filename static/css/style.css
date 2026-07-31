@@ -31,7 +31,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* Soft ambient glow that shifts with mode */
 .ambient-glow {
     position: fixed;
     inset: -20%;
@@ -57,7 +56,6 @@ body {
     box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
-/* Brand header */
 .brand {
     display: flex;
     align-items: center;
@@ -83,7 +81,6 @@ body {
     transition: background 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Mode tabs */
 .mode-tabs {
     display: flex;
     gap: 4px;
@@ -116,7 +113,6 @@ body {
     box-shadow: 0 4px 14px rgba(0,0,0,0.25);
 }
 
-/* Timer ring */
 .timer-container {
     position: relative;
     width: 280px;
@@ -172,7 +168,6 @@ body {
     font-weight: 500;
 }
 
-/* Controls */
 .controls {
     display: flex;
     gap: 12px;
@@ -180,10 +175,10 @@ body {
 }
 
 .btn {
-    padding: 16px 24px;
+    padding: 20px 24px;
     border: none;
     border-radius: 14px;
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
@@ -208,7 +203,7 @@ body {
 .btn-start:active { transform: translateY(0); }
 
 .btn-reset {
-    width: 56px;
+    width: 64px;
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
     border: 1px solid var(--card-border);
@@ -219,7 +214,11 @@ body {
     transform: translateY(-2px);
 }
 
-/* Session counter */
+.btn-reset svg {
+    width: 24px;
+    height: 24px;
+}
+
 .session-counter {
     text-align: center;
     color: var(--text-secondary);
@@ -248,7 +247,6 @@ body {
     box-shadow: 0 0 10px var(--accent);
 }
 
-/* Subtle pulse when running */
 .running .timer-container {
     animation: gentle-pulse 4s ease-in-out infinite;
 }
@@ -258,7 +256,6 @@ body {
     50% { transform: scale(1.015); }
 }
 
-/* Responsive */
 @media (max-width: 480px) {
     .pomodoro-card { padding: 32px 24px; }
     .timer-container { width: 240px; height: 240px; }
