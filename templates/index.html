@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro · Focus Timer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="ambient-glow"></div>
+
+<main class="pomodoro-card">
+    <header class="brand">
+        <span class="brand-dot"></span>
+        <h1>Pomodoro</h1>
+    </header>
+
+    <nav class="mode-tabs" role="tablist">
+        <button class="mode-tab active" data-mode="work">Focus</button>
+        <button class="mode-tab" data-mode="short">Short Break</button>
+        <button class="mode-tab" data-mode="long">Long Break</button>
+    </nav>
+
+    <div class="timer-container">
+        <svg class="progress-ring" viewBox="0 0 280 280">
+            <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
+            <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
+        </svg>
+        <div class="timer-display">
+            <div class="time">25:00</div>
+            <div class="status">Time to focus</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-start">Start</button>
+        <button class="btn btn-reset" aria-label="Reset timer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                <path d="M3 3v5h5"></path>
+            </svg>
+        </button>
+    </div>
+
+    <footer class="session-counter">
+        <span class="session-label">Round <span class="session-num">1</span></span>
+        <div class="dots" aria-hidden="true">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+    </footer>
+</main>
+
+<script>
+    const SETTINGS = {{ settings | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
