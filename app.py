@@ -60,16 +60,6 @@ def index():
     return render_template("index.html", settings=SETTINGS)
 
 
-@app.route("/api/log-session", methods=["POST"])
-def log_session():
-    """Optional endpoint to log completed focus sessions.
-    In a real app you'd persist this to a database."""
-    data = request.get_json() or {}
-    mode = data.get("mode", "work")
-    print(f"[Pomodoro] Logged session: {mode}")
-    return jsonify({"status": "ok", "mode": mode})
-
-
 if __name__ == "__main__":
     is_debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     app.run(debug=is_debug, port=5000)
