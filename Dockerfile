@@ -15,8 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 5. Создаем папку для БД и задаем права
-RUN mkdir -p /app/data && chown -R appuser:appuser /app
 RUN useradd -m appuser
+RUN mkdir -p /app/data && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
