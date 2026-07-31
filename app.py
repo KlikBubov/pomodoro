@@ -1,10 +1,43 @@
 import os
-from flask import Flask, render_template, request, jsonify
+import sqlite3
+import traceback
+import secrets
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, g, session, redirect, url_for
 from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-# Default Pomodoro configuration (in minutes)
+app = Flask(__name__)
+
+# --- Конфигурация и безопасность ---
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin")
+
+# Настройка лимитов запросов (Limiter)
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"  # Храним лимиты в оперативной памяти
+)
+
+# Настройка заголовков безопасности (Talisman)
+# 'unsafe-inline' для script-src нужен, чтобы Flask мог передать переменную SETTINGS в JS
+Talisman(app,
+         content_security_policy={
+             'default-src': "'self'",
+             'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
+             'font-src': ["'self'", 'https://fonts.gstatic.com'],
+             'script-src': ["'self'", "'unsafe-inline'"],  # Внешних скриптов больше нет
+             'img-src': ["'self'", 'data:'],
+             'connect-src': "'self'"
+         },
+         force_https=False  # Установите True при деплое с SSL сертификатом
+         )
+
+# Конфигурация таймера (в минутах)
 SETTINGS = {
     "work": 25,
     "short_break": 5,
@@ -12,54 +45,119 @@ SETTINGS = {
     "long_break_interval": 4,
 }
 
-app = Flask(__name__)
-app.config['SERVER_NAME'] = None  # Don't broadcast the internal name
-# Note: A reverse proxy like Nginx is better at hiding this completely.
-
-# Talisman automatically sets:
-# - Strict-Transport-Security (forces HTTPS)
-# - X-Frame-Options: DENY (prevents clickjacking)
-# - Content-Security-Policy (prevents XSS by restricting where scripts can load from)
-Talisman(app,
-         content_security_policy={
-             'default-src': "'self'",
-             'style-src': ["'self'", 'https://fonts.googleapis.com'],
-             'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             'script-src': "'self'",
-             # Note: We allow inline scripts for the SETTINGS variable,
-             # but for maximum security, move that script to an external .js file.
-         },
-         force_https=False  # Set to True once you have an SSL certificate deployed
-         )
-
-# Rate limiter setup
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"]
-)
+# Локальная база данных SQLite
+DB_PATH = "data/app.db"
 
 
-# Apply a strict limit to the API endpoint
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DB_PATH)
+        db.row_factory = sqlite3.Row
+    return db
+
+
+def init_db():
+    db = get_db()
+    db.execute('''CREATE TABLE IF NOT EXISTS events 
+                  (id INTEGER PRIMARY KEY, timestamp TEXT, event_type TEXT, data TEXT)''')
+    db.execute('''CREATE TABLE IF NOT EXISTS errors 
+                  (id INTEGER PRIMARY KEY, timestamp TEXT, source TEXT, message TEXT, stack TEXT)''')
+    db.commit()
+
+
+@app.teardown_appcontext
+def close_db(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+
+with app.app_context():
+    init_db()
+
+
+# --- Защищенные маршруты админки ---
+@app.route("/admin/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")  # Защита от брутфорса пароля
+def admin_login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+
+        if secrets.compare_digest(username, ADMIN_USER) and secrets.compare_digest(password, ADMIN_PASS):
+            session["logged_in"] = True
+            return redirect(url_for("admin"))
+        return render_template("admin_login.html", error="Неверный логин или пароль")
+
+    return render_template("admin_login.html")
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("logged_in", None)
+    return redirect(url_for("admin_login"))
+
+
+@app.route("/admin")
+def admin():
+    if not session.get("logged_in"):
+        return redirect(url_for("admin_login"))
+
+    db = get_db()
+    events = db.execute("SELECT * FROM events ORDER BY id DESC LIMIT 50").fetchall()
+    errors = db.execute("SELECT * FROM errors ORDER BY id DESC LIMIT 50").fetchall()
+    return render_template("admin.html", events=events, errors=errors)
+
+
+# --- Маршруты приложения ---
+@app.route("/")
+def index():
+    db = get_db()
+    db.execute("INSERT INTO events (timestamp, event_type, data) VALUES (?, ?, ?)",
+               (datetime.now().isoformat(), "pageview", "/"))
+    db.commit()
+    return render_template("index.html", settings=SETTINGS)
+
+
+# --- API для фронтенда ---
 @app.route("/api/log-session", methods=["POST"])
-@limiter.limit("10 per minute")  # Prevent spamming
+@limiter.limit("10 per minute")  # Строгий лимит на логирование сессий
 def log_session():
     data = request.get_json(silent=True) or {}
     mode = data.get("mode", "work")
 
-    # Validate input! Don't trust the user.
     if mode not in ["work", "short", "long"]:
         return jsonify({"status": "error", "message": "Invalid mode"}), 400
 
-    print(f"[Pomodoro] Logged session: {mode}")
+    db = get_db()
+    db.execute("INSERT INTO events (timestamp, event_type, data) VALUES (?, ?, ?)",
+               (datetime.now().isoformat(), "session_complete", mode))
+    db.commit()
     return jsonify({"status": "ok", "mode": mode})
 
 
-@app.route("/")
-def index():
-    return render_template("index.html", settings=SETTINGS)
+@app.route("/api/log-error", methods=["POST"])
+@limiter.limit("10 per minute")  # Лимит на логирование JS ошибок
+def log_error():
+    data = request.get_json(silent=True) or {}
+    db = get_db()
+    db.execute("INSERT INTO errors (timestamp, source, message, stack) VALUES (?, ?, ?, ?)",
+               (datetime.now().isoformat(), "frontend", data.get("message", "Unknown JS Error"), data.get("stack", "")))
+    db.commit()
+    return jsonify({"status": "ok"})
+
+
+# --- Перехватчик ошибок бэкенда ---
+@app.errorhandler(Exception)
+def handle_exception(e):
+    db = get_db()
+    db.execute("INSERT INTO errors (timestamp, source, message, stack) VALUES (?, ?, ?, ?)",
+               (datetime.now().isoformat(), "backend", str(e), traceback.format_exc()))
+    db.commit()
+    return jsonify({"status": "error", "message": "Internal Server Error"}), 500
 
 
 if __name__ == "__main__":
-    is_debug = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    is_debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
     app.run(debug=is_debug, port=5000)

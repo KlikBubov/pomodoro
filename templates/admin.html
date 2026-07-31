@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f8; padding: 20px; color: #333; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px auto; }
+        .container { max-width: 1000px; margin: auto; }
+        h1, h2 { color: #111; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 40px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #f9f9f9; }
+        pre { background: #ffebee; padding: 10px; border-radius: 4px; white-space: pre-wrap; color: #c62828; font-size: 12px; }
+        .logout-btn { text-decoration: none; color: #c62828; font-weight: 600; padding: 8px 16px; border: 1px solid #c62828; border-radius: 8px; }
+        .logout-btn:hover { background: #c62828; color: #fff; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Local Analytics & Monitoring</h1>
+    <a href="/admin/logout" class="logout-btn">Выйти (Logout)</a>
+</div>
+
+<div class="container">
+    <h2>Recent Errors ({{ errors|length }})</h2>
+    <table>
+        <tr>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Message</th>
+            <th>Stack Trace</th>
+        </tr>
+        {% for error in errors %}
+        <tr>
+            <td>{{ error.timestamp[:19] }}</td>
+            <td>{{ error.source }}</td>
+            <td>{{ error.message }}</td>
+            <td>
+                <pre>{{ error.stack }}</pre>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4">No errors recorded! 🎉</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>User Activity ({{ events|length }})</h2>
+    <table>
+        <tr>
+            <th>Time</th>
+            <th>Event Type</th>
+            <th>Data</th>
+        </tr>
+        {% for event in events %}
+        <tr>
+            <td>{{ event.timestamp[:19] }}</td>
+            <td>{{ event.event_type }}</td>
+            <td>{{ event.data }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="3">No activity yet.</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+</body>
+</html>

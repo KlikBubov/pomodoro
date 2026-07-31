@@ -1,3 +1,20 @@
+// --- Глобальный перехватчик ошибок (заменяет Sentry JS) ---
+window.onerror = function(message, source, lineno, colno, error) {
+    const errorData = {
+        message: message,
+        stack: error && error.stack ? error.stack : `${source}:${lineno}:${colno}`
+    };
+
+    // Отправляем ошибку на бэкенд
+    fetch('/api/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(errorData)
+    }).catch(() => {}); // Тихо игнорируем, если отправка не удалась
+
+    return false; // Позволяет стандартному выводу ошибки в консоль
+};
+
 const MODES = {
     work:  { duration: SETTINGS.work * 60,        label: 'Time to focus',     color: '#ff6b6b' },
     short: { duration: SETTINGS.short_break * 60, label: 'Short break',       color: '#4ecdc4' },
