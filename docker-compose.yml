@@ -13,4 +13,7 @@ services:
       - ADMIN_USER=${ADMIN_USER:-admin}
       - ADMIN_PASS=${ADMIN_PASS:-admin}
     volumes:
-      - ./data:/app/data  # Сохраняем базу данных SQLite при перезапусках!
+      - pomodoro_db:/app/data  # Используем именованный том вместо ./data
+
+volumes:
+  pomodoro_db:

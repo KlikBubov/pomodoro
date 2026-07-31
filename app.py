@@ -8,6 +8,9 @@ from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
+DB_PATH = "data/app.db"
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
 app = Flask(__name__)
 
 # --- Конфигурация и безопасность ---
@@ -44,12 +47,6 @@ SETTINGS = {
     "long_break": 15,
     "long_break_interval": 4,
 }
-
-# Локальная база данных SQLite
-DB_PATH = "data/app.db"
-
-# Автоматически создаем папку для базы данных, если её нет
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 def get_db():
     db = getattr(g, '_database', None)
