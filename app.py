@@ -48,6 +48,8 @@ SETTINGS = {
 # Локальная база данных SQLite
 DB_PATH = "data/app.db"
 
+# Автоматически создаем папку для базы данных, если её нет
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 def get_db():
     db = getattr(g, '_database', None)

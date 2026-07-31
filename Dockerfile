@@ -1,7 +1,7 @@
 # 1. Легкий образ Python
 FROM python:3.11-slim
 
-# 2. Отключаем буферизацию для правильного вывода логов
+# 2. Переменные окружения
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -14,9 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 4. Копирование кода
 COPY . .
 
-# 5. Создаем папку для БД и задаем права
+# 5. ВАЖНО: Сначала создаем пользователя, потом папку и выдаем права!
 RUN useradd -m appuser
-RUN mkdir -p /app/data && chown -R appuser:appuser /app
+RUN mkdir -p /app/data
+RUN chown -R appuser:appuser /app
+
+# Переключаемся на безопасного пользователя
 USER appuser
 
 EXPOSE 8000
