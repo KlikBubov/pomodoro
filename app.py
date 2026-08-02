@@ -7,46 +7,45 @@ from flask import Flask, render_template, request, jsonify, g, session, redirect
 from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
-DB_PATH = "data/app.db"
-os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # --- Конфигурация и безопасность ---
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin")
 
-# Настройка лимитов запросов (Limiter)
 limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://"  # Храним лимиты в оперативной памяти
+    storage_uri="memory://"
 )
 
-# Настройка заголовков безопасности (Talisman)
-# 'unsafe-inline' для script-src нужен, чтобы Flask мог передать переменную SETTINGS в JS
 Talisman(app,
          content_security_policy={
              'default-src': "'self'",
              'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             'script-src': ["'self'", "'unsafe-inline'"],  # Внешних скриптов больше нет
+             'script-src': ["'self'", "'unsafe-inline'"],
              'img-src': ["'self'", 'data:'],
              'connect-src': "'self'"
          },
-         force_https=False  # Установите True при деплое с SSL сертификатом
+         force_https=True
          )
 
-# Конфигурация таймера (в минутах)
 SETTINGS = {
     "work": 25,
     "short_break": 5,
     "long_break": 15,
     "long_break_interval": 4,
 }
+
+DB_PATH = "data/app.db"
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -76,9 +75,8 @@ with app.app_context():
     init_db()
 
 
-# --- Защищенные маршруты админки ---
 @app.route("/admin/login", methods=["GET", "POST"])
-@limiter.limit("5 per minute")  # Защита от брутфорса пароля
+@limiter.limit("5 per minute")
 def admin_login():
     if request.method == "POST":
         username = request.form.get("username")
@@ -109,7 +107,6 @@ def admin():
     return render_template("admin.html", events=events, errors=errors)
 
 
-# --- Маршруты приложения ---
 @app.route("/")
 def index():
     db = get_db()
@@ -119,9 +116,8 @@ def index():
     return render_template("index.html", settings=SETTINGS)
 
 
-# --- API для фронтенда ---
 @app.route("/api/log-session", methods=["POST"])
-@limiter.limit("10 per minute")  # Строгий лимит на логирование сессий
+@limiter.limit("10 per minute")
 def log_session():
     data = request.get_json(silent=True) or {}
     mode = data.get("mode", "work")
@@ -137,7 +133,7 @@ def log_session():
 
 
 @app.route("/api/log-error", methods=["POST"])
-@limiter.limit("10 per minute")  # Лимит на логирование JS ошибок
+@limiter.limit("10 per minute")
 def log_error():
     data = request.get_json(silent=True) or {}
     db = get_db()
@@ -147,7 +143,6 @@ def log_error():
     return jsonify({"status": "ok"})
 
 
-# --- Перехватчик ошибок бэкенда ---
 @app.errorhandler(Exception)
 def handle_exception(e):
     db = get_db()
