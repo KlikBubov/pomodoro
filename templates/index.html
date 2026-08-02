@@ -8,6 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Umami Analytics (replace data-website-id) -->
+    <script defer src="http://localhost:3000/script.js" data-website-id="REPLACE_WITH_UMAMI_ID"></script>
+
+    <!-- GlitchTip JS SDK -->
+    {% if sentry_dsn %}
+    <script src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.94.1/build/bundle.min.js"></script>
+    {% endif %}
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -60,6 +69,13 @@
 
 <script>
     const SETTINGS = {{ settings | tojson }};
+
+    // GlitchTip JS initialization
+    {% if sentry_dsn %}
+    if (window.Sentry) {
+        Sentry.init({ dsn: "{{ sentry_dsn }}" });
+    }
+    {% endif %}
 </script>
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

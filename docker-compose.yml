@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Main Application
   pomodoro:
     build: .
     container_name: pomodoro-app
@@ -8,13 +9,12 @@ services:
     expose:
       - "8000"
     environment:
-      - FLASK_DEBUG=false
-      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-super_secret_default_key}
-      - ADMIN_USER=${ADMIN_USER:-admin}
-      - ADMIN_PASS=${ADMIN_PASS:-admin}
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
+      - SENTRY_DSN=${SENTRY_DSN:-}
     volumes:
-      - ./data:/app/data
+      - ./data/app:/app/data
 
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: pomodoro-nginx
@@ -24,15 +24,114 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # Using system paths for Let's Encrypt
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot
+      - /var/www/certbot:/var/www/certbot:ro
     depends_on:
       - pomodoro
 
-  certbot:
-    image: certbot/certbot
-    container_name: pomodoro-certbot
+  # Grafana Loki (Log Storage)
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: pomodoro-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do sleep 6h & wait $${!}; certbot renew; done;'"
+      - ./data/loki:/loki
+
+  # Promtail (Log Collector)
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: pomodoro-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/promtail-config.yml
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
+
+  # Grafana (Dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pomodoro-grafana
+    restart: unless-stopped
+    ports:
+      - "3030:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+
+  # Umami (Web Analytics)
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    container_name: pomodoro-umami
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${UMAMI_DATABASE_URL}
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET}
+    depends_on:
+      - umami-db
+
+  umami-db:
+    image: postgres:15-alpine
+    container_name: pomodoro-umami-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${UMAMI_DB_NAME}
+      POSTGRES_USER: ${UMAMI_DB_USER}
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - ./data/umami-db:/var/lib/postgresql/data
+
+  # GlitchTip (Error Tracking)
+  glitchtip:
+    image: glitchtip/glitchtip:latest
+    container_name: pomodoro-glitchtip
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - PORT=8000
+      - SECRET_KEY=${GLITCHTIP_SECRET_KEY}
+      - DATABASE_URL=${GLITCHTIP_DATABASE_URL}
+      - REDIS_URL=${GLITCHTIP_REDIS_URL}
+      - EMAIL_URL=console://localhost
+    depends_on:
+      - glitchtip-db
+      - glitchtip-redis
+
+  glitchtip-worker:
+    image: glitchtip/glitchtip:latest
+    container_name: pomodoro-glitchtip-worker
+    restart: unless-stopped
+    command: ./bin/run-celery-with-beat.sh
+    environment:
+      - SECRET_KEY=${GLITCHTIP_SECRET_KEY}
+      - DATABASE_URL=${GLITCHTIP_DATABASE_URL}
+      - REDIS_URL=${GLITCHTIP_REDIS_URL}
+    depends_on:
+      - glitchtip
+
+  glitchtip-db:
+    image: postgres:15-alpine
+    container_name: pomodoro-glitchtip-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${GLITCHTIP_DB_NAME}
+      POSTGRES_USER: ${GLITCHTIP_DB_USER}
+      POSTGRES_PASSWORD: ${GLITCHTIP_DB_PASSWORD}
+    volumes:
+      - ./data/glitchtip-db:/var/lib/postgresql/data
+
+  glitchtip-redis:
+    image: redis:7-alpine
+    container_name: pomodoro-glitchtip-redis
+    restart: unless-stopped
