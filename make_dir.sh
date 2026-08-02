@@ -9,3 +9,6 @@ sudo chown -R 472:472 data/grafana
 
 # Set ownership for Loki (UID 10001)
 sudo chown -R 10001:10001 data/loki
+
+# Set ownership for Flask App (UID 1000 is standard for the appuser in our Dockerfile)
+sudo chown -R 1000:1000 data/app
