@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name 25x5.ru www.25x5.ru;
+    server_name ${DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -13,10 +13,10 @@ server {
 
 server {
     listen 443 ssl;
-    server_name 25x5.ru www.25x5.ru;
+    server_name ${DOMAIN};
 
-    ssl_certificate /etc/letsencrypt/live/25x5.ru/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/25x5.ru/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
     location / {
         proxy_pass http://pomodoro:8000;
