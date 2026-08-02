@@ -103,7 +103,7 @@ services:
       - SECRET_KEY=${GLITCHTIP_SECRET_KEY}
       - DATABASE_URL=${GLITCHTIP_DATABASE_URL}
       - REDIS_URL=${GLITCHTIP_REDIS_URL}
-      - EMAIL_URL=console://localhost
+      - EMAIL_URL=${GLITCHTIP_EMAIL_URL}
     depends_on:
       - glitchtip-db
       - glitchtip-redis
@@ -117,6 +117,7 @@ services:
       - SECRET_KEY=${GLITCHTIP_SECRET_KEY}
       - DATABASE_URL=${GLITCHTIP_DATABASE_URL}
       - REDIS_URL=${GLITCHTIP_REDIS_URL}
+      - EMAIL_URL=${GLITCHTIP_EMAIL_URL}
     depends_on:
       - glitchtip
 
