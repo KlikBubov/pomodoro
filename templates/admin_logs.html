@@ -1,0 +1,44 @@
+{% extends "admin_base.html" %}
+{% block content %}
+<h2>Логи ошибок</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Время</th>
+        <th>Источник</th>
+        <th>Сообщение</th>
+        <th>Стек вызовов</th>
+    </tr>
+    {% for error in errors %}
+    <tr>
+        <td>{{ error.id }}</td>
+        <td>{{ error.timestamp[:19] }}</td>
+        <td>{{ error.source }}</td>
+        <td>{{ error.message }}</td>
+        <td>
+            <pre>{{ error.stack }}</pre>
+        </td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="5" style="text-align:center;">Ошибок не зафиксировано 🎉</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('admin_logs', page=page-1) }}">Назад</a>
+    {% else %}
+    <span class="disabled">Назад</span>
+    {% endif %}
+
+    <span class="current">Страница {{ page }} из {{ total_pages if total_pages > 0 else 1 }}</span>
+
+    {% if page < total_pages %}
+    <a href="{{ url_for('admin_logs', page=page+1) }}">Вперед</a>
+    {% else %}
+    <span class="disabled">Вперед</span>
+    {% endif %}
+</div>
+{% endblock %}

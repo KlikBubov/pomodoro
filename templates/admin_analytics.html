@@ -1,0 +1,40 @@
+{% extends "admin_base.html" %}
+{% block content %}
+<h2>Активность пользователей</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Время</th>
+        <th>Событие</th>
+        <th>Данные</th>
+    </tr>
+    {% for event in events %}
+    <tr>
+        <td>{{ event.id }}</td>
+        <td>{{ event.timestamp[:19] }}</td>
+        <td>{{ event.event_type }}</td>
+        <td>{{ event.data }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="4" style="text-align:center;">Нет данных</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('admin_analytics', page=page-1) }}">Назад</a>
+    {% else %}
+    <span class="disabled">Назад</span>
+    {% endif %}
+
+    <span class="current">Страница {{ page }} из {{ total_pages if total_pages > 0 else 1 }}</span>
+
+    {% if page < total_pages %}
+    <a href="{{ url_for('admin_analytics', page=page+1) }}">Вперед</a>
+    {% else %}
+    <span class="disabled">Вперед</span>
+    {% endif %}
+</div>
+{% endblock %}

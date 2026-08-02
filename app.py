@@ -8,6 +8,7 @@ from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.exceptions import NotFound
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
@@ -16,6 +17,8 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin")
+
+PER_PAGE = 50
 
 limiter = Limiter(
     get_remote_address,
@@ -75,6 +78,8 @@ with app.app_context():
     init_db()
 
 
+# --- Защищенные маршруты админки ---
+
 @app.route("/admin/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
 def admin_login():
@@ -84,7 +89,7 @@ def admin_login():
 
         if secrets.compare_digest(username, ADMIN_USER) and secrets.compare_digest(password, ADMIN_PASS):
             session["logged_in"] = True
-            return redirect(url_for("admin"))
+            return redirect(url_for("admin_analytics"))
         return render_template("admin_login.html", error="Неверный логин или пароль")
 
     return render_template("admin_login.html")
@@ -100,13 +105,42 @@ def admin_logout():
 def admin():
     if not session.get("logged_in"):
         return redirect(url_for("admin_login"))
+    return redirect(url_for("admin_analytics"))
+
+
+@app.route("/admin/analytics")
+def admin_analytics():
+    if not session.get("logged_in"):
+        return redirect(url_for("admin_login"))
+
+    page = request.args.get('page', 1, type=int)
+    offset = (page - 1) * PER_PAGE
 
     db = get_db()
-    events = db.execute("SELECT * FROM events ORDER BY id DESC LIMIT 50").fetchall()
-    errors = db.execute("SELECT * FROM errors ORDER BY id DESC LIMIT 50").fetchall()
-    return render_template("admin.html", events=events, errors=errors)
+    total = db.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+    events = db.execute("SELECT * FROM events ORDER BY id DESC LIMIT ? OFFSET ?", (PER_PAGE, offset)).fetchall()
+
+    total_pages = (total + PER_PAGE - 1) // PER_PAGE
+    return render_template("admin_analytics.html", events=events, page=page, total_pages=total_pages)
 
 
+@app.route("/admin/logs")
+def admin_logs():
+    if not session.get("logged_in"):
+        return redirect(url_for("admin_login"))
+
+    page = request.args.get('page', 1, type=int)
+    offset = (page - 1) * PER_PAGE
+
+    db = get_db()
+    total = db.execute("SELECT COUNT(*) FROM errors").fetchone()[0]
+    errors = db.execute("SELECT * FROM errors ORDER BY id DESC LIMIT ? OFFSET ?", (PER_PAGE, offset)).fetchall()
+
+    total_pages = (total + PER_PAGE - 1) // PER_PAGE
+    return render_template("admin_logs.html", errors=errors, page=page, total_pages=total_pages)
+
+
+# --- Маршруты приложения ---
 @app.route("/")
 def index():
     db = get_db()
@@ -141,6 +175,16 @@ def log_error():
                (datetime.now().isoformat(), "frontend", data.get("message", "Unknown JS Error"), data.get("stack", "")))
     db.commit()
     return jsonify({"status": "ok"})
+
+
+# --- Перехватчики ошибок ---
+@app.errorhandler(404)
+def handle_404(e):
+    db = get_db()
+    db.execute("INSERT INTO errors (timestamp, source, message, stack) VALUES (?, ?, ?, ?)",
+               (datetime.now().isoformat(), "backend", "404 Not Found", str(e)))
+    db.commit()
+    return jsonify({"status": "error", "message": "Not Found"}), 404
 
 
 @app.errorhandler(Exception)

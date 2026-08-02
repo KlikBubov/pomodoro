@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Pomodoro Admin</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <style>
+        body { font-family: sans-serif; background: #f4f4f8; padding: 20px; color: #333; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px auto; }
+        h1 { color: #111; margin: 0; font-size: 24px; }
+        .nav { display: flex; gap: 15px; align-items: center; }
+        .nav a { text-decoration: none; color: #302b63; font-weight: 600; padding: 8px 16px; border-radius: 8px; transition: 0.2s; }
+        .nav a:hover { background: #e8e8f0; }
+        .nav a.active { background: #302b63; color: #fff; }
+        .logout-btn { text-decoration: none; color: #c62828; font-weight: 600; padding: 8px 16px; border: 1px solid #c62828; border-radius: 8px; }
+        .logout-btn:hover { background: #c62828; color: #fff; }
+        .container { max-width: 1000px; margin: auto; }
+        h2 { color: #111; margin-top: 0; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #f9f9f9; }
+        pre { background: #ffebee; padding: 10px; border-radius: 4px; white-space: pre-wrap; color: #c62828; font-size: 12px; max-width: 500px; overflow-x: auto; }
+        .pagination { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .pagination a, .pagination span { padding: 8px 16px; border: 1px solid #ddd; border-radius: 4px; text-decoration: none; color: #302b63; background: #fff; }
+        .pagination .current { background: #302b63; color: #fff; border-color: #302b63; }
+        .pagination .disabled { color: #aaa; background: #f4f4f8; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>🍅 Pomodoro Admin</h1>
+    <div class="nav">
+        <a href="{{ url_for('admin_analytics')') }}"
+           class="{% if request.endpoint == 'admin_analytics' %}active{% endif %}">Аналитика</a>
+        <a href="{{ url_for('admin_logs') }}" class="{% if request.endpoint == 'admin_logs' %}active{% endif %}">Логи
+            ошибок</a>
+        <a href="{{ url_for('admin_logout') }}" class="logout-btn">Выйти</a>
+    </div>
+</div>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>
