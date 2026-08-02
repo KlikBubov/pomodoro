@@ -1,13 +1,13 @@
 {% extends "admin_base.html" %}
 {% block content %}
-<h2>Логи ошибок</h2>
+<h2>Error Logs</h2>
 <table>
     <tr>
         <th>ID</th>
-        <th>Время</th>
-        <th>Источник</th>
-        <th>Сообщение</th>
-        <th>Стек вызовов</th>
+        <th>Time</th>
+        <th>Source</th>
+        <th>Message</th>
+        <th>Stack Trace</th>
     </tr>
     {% for error in errors %}
     <tr>
@@ -21,24 +21,24 @@
     </tr>
     {% else %}
     <tr>
-        <td colspan="5" style="text-align:center;">Ошибок не зафиксировано 🎉</td>
+        <td colspan="5" style="text-align:center;">No errors recorded 🎉</td>
     </tr>
     {% endfor %}
 </table>
 
 <div class="pagination">
     {% if page > 1 %}
-    <a href="{{ url_for('admin_logs', page=page-1) }}">Назад</a>
+    <a href="{{ url_for('admin_logs', page=page-1) }}">Prev</a>
     {% else %}
-    <span class="disabled">Назад</span>
+    <span class="disabled">Prev</span>
     {% endif %}
 
-    <span class="current">Страница {{ page }} из {{ total_pages if total_pages > 0 else 1 }}</span>
+    <span class="current">Page {{ page }} of {{ total_pages if total_pages > 0 else 1 }}</span>
 
     {% if page < total_pages %}
-    <a href="{{ url_for('admin_logs', page=page+1) }}">Вперед</a>
+    <a href="{{ url_for('admin_logs', page=page+1) }}">Next</a>
     {% else %}
-    <span class="disabled">Вперед</span>
+    <span class="disabled">Next</span>
     {% endif %}
 </div>
 {% endblock %}

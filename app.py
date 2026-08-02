@@ -13,7 +13,7 @@ from werkzeug.exceptions import NotFound
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-# --- Конфигурация и безопасность ---
+# --- Configuration & Security ---
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "admin")
@@ -78,7 +78,7 @@ with app.app_context():
     init_db()
 
 
-# --- Защищенные маршруты админки ---
+# --- Protected Admin Routes ---
 
 @app.route("/admin/login", methods=["GET", "POST"])
 @limiter.limit("5 per minute")
@@ -90,7 +90,7 @@ def admin_login():
         if secrets.compare_digest(username, ADMIN_USER) and secrets.compare_digest(password, ADMIN_PASS):
             session["logged_in"] = True
             return redirect(url_for("admin_analytics"))
-        return render_template("admin_login.html", error="Неверный логин или пароль")
+        return render_template("admin_login.html", error="Invalid username or password")
 
     return render_template("admin_login.html")
 
@@ -140,7 +140,7 @@ def admin_logs():
     return render_template("admin_logs.html", errors=errors, page=page, total_pages=total_pages)
 
 
-# --- Маршруты приложения ---
+# --- App Routes ---
 @app.route("/")
 def index():
     db = get_db()
@@ -150,6 +150,7 @@ def index():
     return render_template("index.html", settings=SETTINGS)
 
 
+# --- Frontend API ---
 @app.route("/api/log-session", methods=["POST"])
 @limiter.limit("10 per minute")
 def log_session():
@@ -177,7 +178,7 @@ def log_error():
     return jsonify({"status": "ok"})
 
 
-# --- Перехватчики ошибок ---
+# --- Error Handlers ---
 @app.errorhandler(404)
 def handle_404(e):
     db = get_db()
@@ -197,5 +198,6 @@ def handle_exception(e):
 
 
 if __name__ == "__main__":
+    # Safe launch: debug is off by default, enabled only via environment variable
     is_debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
     app.run(debug=is_debug, port=5000)

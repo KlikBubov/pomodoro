@@ -7,13 +7,13 @@ DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'app.db')
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Просмотр последних ошибок Pomodoro из логов SQLite.")
+    parser = argparse.ArgumentParser(description="View latest Pomodoro errors from SQLite logs.")
     parser.add_argument("-n", "--number", type=int, default=10,
-                        help="Количество ошибок для вывода (по умолчанию 10)")
+                        help="Number of errors to display (default 10)")
     args = parser.parse_args()
 
     if not os.path.exists(DB_PATH):
-        print(f"Файл базы данных не найден: {DB_PATH}")
+        print(f"Database file not found: {DB_PATH}")
         return
 
     try:
@@ -23,7 +23,7 @@ def main():
         rows = cursor.fetchall()
 
         if not rows:
-            print("Ошибок не найдено.")
+            print("No errors found.")
 
         for row in rows:
             print(f"--- {row[0]} [{row[1]}] ---")
@@ -32,7 +32,7 @@ def main():
                 print(f"Stack:\n{row[3]}")
             print()
     except Exception as e:
-        print(f"Ошибка чтения БД: {e}")
+        print(f"Database read error: {e}")
     finally:
         if 'conn' in locals():
             conn.close()

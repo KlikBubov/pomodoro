@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login · Pomodoro</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -51,14 +52,14 @@
     {% endif %}
     <form method="POST" action="/admin/login">
         <div class="form-group">
-            <label for="username">Логин</label>
+            <label for="username">Username</label>
             <input type="text" id="username" name="username" required autocomplete="username">
         </div>
         <div class="form-group">
-            <label for="password">Пароль</label>
+            <label for="password">Password</label>
             <input type="password" id="password" name="password" required autocomplete="current-password">
         </div>
-        <button type="submit" class="btn-login">Войти</button>
+        <button type="submit" class="btn-login">Login</button>
     </form>
 </div>
 </body>

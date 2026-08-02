@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Pomodoro Admin</title>
@@ -30,11 +30,11 @@
 <div class="header">
     <h1>🍅 Pomodoro Admin</h1>
     <div class="nav">
-        <a href="{{ url_for('admin_analytics')') }}"
-           class="{% if request.endpoint == 'admin_analytics' %}active{% endif %}">Аналитика</a>
-        <a href="{{ url_for('admin_logs') }}" class="{% if request.endpoint == 'admin_logs' %}active{% endif %}">Логи
-            ошибок</a>
-        <a href="{{ url_for('admin_logout') }}" class="logout-btn">Выйти</a>
+        <a href="{{ url_for('admin_analytics') }}"
+           class="{% if request.endpoint == 'admin_analytics' %}active{% endif %}">Analytics</a>
+        <a href="{{ url_for('admin_logs') }}" class="{% if request.endpoint == 'admin_logs' %}active{% endif %}">Error
+            Logs</a>
+        <a href="{{ url_for('admin_logout') }}" class="logout-btn">Logout</a>
     </div>
 </div>
 <div class="container">
