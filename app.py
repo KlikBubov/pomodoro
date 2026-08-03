@@ -62,6 +62,11 @@ def log_session():
         return jsonify({"status": "error", "message": "Invalid mode"}), 400
     return jsonify({"status": "ok", "mode": mode})
 
+@app.route("/error")
+@limiter.limit("10 per minute")
+def trigger_error():
+    division_by_zero = 1 / 0
+
 
 if __name__ == "__main__":
     is_debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
