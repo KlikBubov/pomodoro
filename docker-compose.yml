@@ -11,6 +11,8 @@ services:
     environment:
       - FLASK_DEBUG=${FLASK_DEBUG:-false}
       - SENTRY_DSN=${SENTRY_DSN:-}
+      - UMAMI_URL=${UMAMI_URL:-}
+      - UMAMI_ID=${UMAMI_ID:-}
     volumes:
       - ./data/app:/app/data
 
