@@ -106,6 +106,7 @@ services:
       - DATABASE_URL=${GLITCHTIP_DATABASE_URL}
       - REDIS_URL=${GLITCHTIP_REDIS_URL}
       - EMAIL_URL=${GLITCHTIP_EMAIL_URL}
+      - ALLOWED_HOSTS=${GLITCHTIP_ALLOWED_HOSTS}
     depends_on:
       - glitchtip-db
       - glitchtip-redis
@@ -120,6 +121,7 @@ services:
       - DATABASE_URL=${GLITCHTIP_DATABASE_URL}
       - REDIS_URL=${GLITCHTIP_REDIS_URL}
       - EMAIL_URL=${GLITCHTIP_EMAIL_URL}
+      - ALLOWED_HOSTS=${GLITCHTIP_ALLOWED_HOSTS}
     depends_on:
       - glitchtip
 
