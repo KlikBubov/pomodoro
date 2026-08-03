@@ -32,9 +32,11 @@ Talisman(app,
              'default-src': "'self'",
              'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+             # Добавьте URL вашего поддомена Umami сюда:
+             'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
-             'connect-src': ["'self'", 'http://localhost:8001']
+             # И сюда для отправки данных:
+             'connect-src': ["'self'", 'http://localhost:8001', 'https://umami.25x5.ru']
          },
          force_https=False
          )
