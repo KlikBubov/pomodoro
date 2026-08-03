@@ -9,8 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Umami Analytics (replace data-website-id) -->
-    <script defer src="http://localhost:3000/script.js" data-website-id="REPLACE_WITH_UMAMI_ID"></script>
+    <!-- Umami Analytics -->
+    {% if umami_id %}
+    <script defer src="{{ umami_url }}/script.js" data-website-id="{{ umami_id }}"></script>
+    {% endif %}
 
     <!-- GlitchTip JS SDK -->
     {% if sentry_dsn %}

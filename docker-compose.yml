@@ -73,8 +73,8 @@ services:
     image: ghcr.io/umami-software/umami:postgresql-latest
     container_name: pomodoro-umami
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000" # Доступен только внутри сети для Nginx
     environment:
       DATABASE_URL: ${UMAMI_DATABASE_URL}
       DATABASE_TYPE: postgresql

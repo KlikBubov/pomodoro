@@ -26,13 +26,13 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Content Security Policy (allowing local Umami and GlitchTip for development)
+# Content Security Policy (теперь script-src 'self' закрывает все нужды)
 Talisman(app,
          content_security_policy={
              'default-src': "'self'",
              'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             'script-src': ["'self'", "'unsafe-inline'", 'http://localhost:3000', 'http://localhost:8001'],
+             'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
              'img-src': ["'self'", 'data:'],
              'connect-src': ["'self'", 'http://localhost:8001']
          },
@@ -47,10 +47,20 @@ SETTINGS = {
     "long_break_interval": 4,
 }
 
+# Читаем настройки Umami
+UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
+UMAMI_ID = os.environ.get("UMAMI_ID", "")
+
 
 @app.route("/")
 def index():
-    return render_template("index.html", settings=SETTINGS, sentry_dsn=SENTRY_DSN or "")
+    return render_template(
+        "index.html",
+        settings=SETTINGS,
+        sentry_dsn=SENTRY_DSN or "",
+        umami_url=UMAMI_URL,
+        umami_id=UMAMI_ID
+    )
 
 
 @app.route("/api/log-session", methods=["POST"])
@@ -61,6 +71,7 @@ def log_session():
     if mode not in ["work", "short", "long"]:
         return jsonify({"status": "error", "message": "Invalid mode"}), 400
     return jsonify({"status": "ok", "mode": mode})
+
 
 @app.route("/error")
 @limiter.limit("10 per minute")
