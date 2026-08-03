@@ -1,7 +1,7 @@
 # HTTP -> HTTPS Redirect & Let's Encrypt Challenge
 server {
     listen 80;
-    server_name ${DOMAIN} umami.${DOMAIN};
+    server_name ${DOMAIN} umami.${DOMAIN} grafana.${DOMAIN} glitchtip.${DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -17,7 +17,6 @@ server {
     listen 443 ssl;
     server_name ${DOMAIN};
 
-    # Dynamic paths based on DOMAIN variable
     ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
@@ -30,17 +29,50 @@ server {
     }
 }
 
-# Subdomain (Umami Analytics)
+# Umami (Analytics)
 server {
     listen 443 ssl;
     server_name umami.${DOMAIN};
 
-    # Same certificate path (SAN certificate covers both domains)
     ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
     location / {
         proxy_pass http://umami:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# Grafana (Dashboards)
+server {
+    listen 443 ssl;
+    server_name grafana.${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    location / {
+        proxy_pass http://grafana:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# GlitchTip (Error Tracking)
+server {
+    listen 443 ssl;
+    server_name glitchtip.${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    location / {
+        proxy_pass http://glitchtip:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

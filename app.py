@@ -32,13 +32,13 @@ Talisman(app,
              'default-src': "'self'",
              'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             # Добавьте URL вашего поддомена Umami сюда:
+             # Разрешаем загрузку Sentry SDK и скрипта Umami
              'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
-             # И сюда для отправки данных:
-             'connect-src': ["'self'", 'http://localhost:8001', 'https://umami.25x5.ru']
+             # Разрешаем отправку ошибок в GlitchTip и статистики в Umami
+             'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru']
          },
-         force_https=False
+         force_https=True  # Теперь можно включить строгий HTTPS
          )
 
 # --- App Configuration ---
