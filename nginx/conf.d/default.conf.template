@@ -1,6 +1,7 @@
+# HTTP -> HTTPS Redirect & Let's Encrypt Challenge
 server {
     listen 80;
-    server_name ${DOMAIN};
+    server_name ${DOMAIN} umami.${DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
@@ -11,24 +12,35 @@ server {
     }
 }
 
+# Main Domain (Pomodoro App)
 server {
     listen 443 ssl;
     server_name ${DOMAIN};
 
+    # Dynamic paths based on DOMAIN variable
     ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
-    # Proxy Umami
-    location /umami/ {
-        proxy_pass http://umami:3000/;
+    location / {
+        proxy_pass http://pomodoro:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+}
+
+# Subdomain (Umami Analytics)
+server {
+    listen 443 ssl;
+    server_name umami.${DOMAIN};
+
+    # Same certificate path (SAN certificate covers both domains)
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
     location / {
-        proxy_pass http://pomodoro:8000;
+        proxy_pass http://umami:3000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
