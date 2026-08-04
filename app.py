@@ -1,5 +1,6 @@
 import os
 import sentry_sdk
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify
 from flask_talisman import Talisman
 from flask_limiter import Limiter
@@ -26,19 +27,16 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Content Security Policy (теперь script-src 'self' закрывает все нужды)
 Talisman(app,
          content_security_policy={
              'default-src': "'self'",
              'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             # Разрешаем загрузку Sentry SDK и скрипта Umami
              'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
-             # Разрешаем отправку ошибок в GlitchTip и статистики в Umami
              'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru']
          },
-         force_https=True  # Теперь можно включить строгий HTTPS
+         force_https=True
          )
 
 # --- App Configuration ---
@@ -49,7 +47,9 @@ SETTINGS = {
     "long_break_interval": 4,
 }
 
-# Читаем настройки Umami
+# Ensure data directory exists
+os.makedirs("data", exist_ok=True)
+
 UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
 UMAMI_ID = os.environ.get("UMAMI_ID", "")
 
@@ -73,6 +73,22 @@ def log_session():
     if mode not in ["work", "short", "long"]:
         return jsonify({"status": "error", "message": "Invalid mode"}), 400
     return jsonify({"status": "ok", "mode": mode})
+
+
+@app.route("/api/feedback", methods=["POST"])
+@limiter.limit("3 per minute")  # Strict limit to prevent spam
+def submit_feedback():
+    data = request.get_json(silent=True) or {}
+    message = data.get("message", "").strip()
+
+    if not message or len(message) > 1000:
+        return jsonify({"status": "error", "message": "Message must be between 1 and 1000 characters"}), 400
+
+    # Save feedback to a local file
+    with open("data/feedback.log", "a", encoding="utf-8") as f:
+        f.write(f"[{datetime.now().isoformat()}] IP: {request.remote_addr} - {message}\n")
+
+    return jsonify({"status": "ok", "message": "Feedback received"})
 
 
 @app.route("/error")

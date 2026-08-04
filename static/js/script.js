@@ -203,3 +203,48 @@ document.addEventListener('keydown', (e) => {
 
 // Init
 updateDisplay();
+
+// --- Floating Feedback Widget Logic ---
+const $feedbackToggle = document.getElementById('feedback-toggle');
+const $feedbackForm = document.getElementById('feedback-form');
+const $submitFeedbackBtn = document.getElementById('submit-feedback');
+const $feedbackText = document.getElementById('feedback-text');
+
+if ($feedbackToggle) {
+    $feedbackToggle.addEventListener('click', () => {
+        $feedbackForm.classList.toggle('active');
+    });
+
+    $submitFeedbackBtn.addEventListener('click', async () => {
+        const message = $feedbackText.value.trim();
+        if (!message) return;
+
+        $submitFeedbackBtn.textContent = 'Sending...';
+        $submitFeedbackBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            if (response.ok) {
+                $feedbackText.value = '';
+                $feedbackForm.classList.remove('active');
+                $feedbackToggle.textContent = 'Thank you for your feedback! ✓';
+                setTimeout(() => {
+                    $feedbackToggle.textContent = 'Report an issue or send feedback';
+                }, 3000);
+            } else {
+                const data = await response.json();
+                alert(data.message || 'Failed to send');
+            }
+        } catch (err) {
+            alert('Network error. Please try later.');
+        } finally {
+            $submitFeedbackBtn.textContent = 'Send';
+            $submitFeedbackBtn.disabled = false;
+        }
+    });
+}
