@@ -1,24 +1,23 @@
-// --- Глобальный перехватчик ошибок (заменяет Sentry JS) ---
+// --- Global Error Handler (Replaces Sentry JS) ---
 window.onerror = function(message, source, lineno, colno, error) {
     const errorData = {
         message: message,
         stack: error && error.stack ? error.stack : `${source}:${lineno}:${colno}`
     };
 
-    // Отправляем ошибку на бэкенд
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorData)
-    }).catch(() => {}); // Тихо игнорируем, если отправка не удалась
+    }).catch(() => {});
 
-    return false; // Позволяет стандартному выводу ошибки в консоль
+    return false;
 };
 
 const MODES = {
     work:  { duration: SETTINGS.work * 60,        label: 'Time to focus',     color: '#ff6b6b' },
     short: { duration: SETTINGS.short_break * 60, label: 'Short break',       color: '#4ecdc4' },
-    long:  { duration: SETTINGS.long_break * 60,  label: 'Long break',        color: '#a78bfa' },
+    long:  { duration: SETTINGS.long_break * 60, label: 'Long break',        color: '#a78bfa' },
 };
 
 const LONG_BREAK_INTERVAL = SETTINGS.long_break_interval;
@@ -59,12 +58,11 @@ function updateDisplay() {
     const progress = (totalTime - timeLeft) / totalTime;
     $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 
-    // Update browser tab title so the user can see time remaining
     const modeLabel = currentMode === 'work' ? 'Focus' : 'Break';
     document.title = `${formatTime(timeLeft)} · ${modeLabel}`;
 }
 
-function setMode(mode, { autostart = false } = {}) {
+function setMode(mode) {
     currentMode = mode;
     timeLeft = MODES[mode].duration;
     totalTime = MODES[mode].duration;
@@ -78,8 +76,6 @@ function setMode(mode, { autostart = false } = {}) {
     $body.classList.remove('running');
 
     updateDisplay();
-
-    if (autostart) startTimer();
 }
 
 function startTimer() {
@@ -135,9 +131,9 @@ function handleComplete() {
         }).catch(() => {});
 
         const nextMode = (completedSessions % LONG_BREAK_INTERVAL === 0) ? 'long' : 'short';
-        setMode(nextMode, { autostart: true });
+        setMode(nextMode); // Auto-start removed, waits for user to press Start
     } else {
-        setMode('work', { autostart: true });
+        setMode('work'); // Auto-start removed, waits for user to press Start
     }
 }
 
@@ -146,31 +142,43 @@ function updateDots() {
     $dots.forEach((dot, i) => dot.classList.toggle('completed', i < cycle));
 }
 
-/* --- Sound: gentle chime via Web Audio API --- */
+// --- Sound: Loud 3-note chime via Web Audio API ---
+let audioCtx = null;
 function playChime() {
     try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = ctx.currentTime;
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
 
-        // Two-note ascending chime
-        [880, 1320].forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+
+        // Ascending 3-note alarm (C5, E5, G5)
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
             osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.type = 'sine';
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine'; // 'triangle' or 'sine'
             osc.frequency.value = freq;
-            const t = now + i * 0.18;
+
+            const t = now + i * 0.25; // Delay between notes
             gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.25, t + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+            gain.gain.linearRampToValueAtTime(0.5, t + 0.02); // Louder volume (0.5)
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5); // Longer decay (1.5s)
+
             osc.start(t);
-            osc.stop(t + 0.65);
+            osc.stop(t + 1.55);
         });
-    } catch (e) { /* audio not supported */ }
+    } catch (e) {
+        console.warn("Audio playback failed:", e);
+    }
 }
 
-/* --- Browser notifications --- */
+// --- Browser notifications ---
 function notify(message) {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
@@ -182,12 +190,11 @@ function notify(message) {
     }
 }
 
-/* --- Wire up events --- */
+// --- Wire up events ---
  $tabs.forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
  $startBtn.addEventListener('click', startTimer);
  $resetBtn.addEventListener('click', resetTimer);
 
-// Keyboard shortcuts: Space = start/pause, R = reset
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') { e.preventDefault(); startTimer(); }
