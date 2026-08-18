@@ -1,3 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <text y=".9em" font-size="90">🍅</text>
+  <!-- Background with rounded corners -->
+  <rect width="100" height="100" fill="#0a0a12" rx="20" ry="20"/>
+
+  <!-- Terminal Prompt >_ (Pixelated) -->
+  <!-- The > symbol -->
+  <rect x="20" y="30" width="15" height="15" fill="#00ff33"/>
+  <rect x="35" y="45" width="15" height="15" fill="#00ff33"/>
+  <rect x="20" y="60" width="15" height="15" fill="#00ff33"/>
+
+  <!-- The _ symbol -->
+  <rect x="55" y="75" width="25" height="15" fill="#00ff33"/>
 </svg>
