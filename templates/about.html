@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Pomodoro Technique — CyberDeck</title>
+    <meta name="description" content="Learn about the Pomodoro Technique and how it boosts productivity. 25 minutes of focus, 5 minutes of break.">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .about-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 40px;
+            background: #111119;
+            border: 2px solid #00ffcc;
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.6);
+        }
+        .about-container h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            color: #00ff99;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .about-container h2 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: #00ffff;
+            margin-top: 30px;
+            margin-bottom: 10px;
+        }
+        .about-container p, .about-container li {
+            font-family: 'VT323', monospace;
+            font-size: 20px;
+            color: #e0e0ff;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .about-container a {
+            color: #ff00ff;
+            text-decoration: none;
+            border-bottom: 1px solid #ff00ff;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 40px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="crt-overlay"></div>
+    <div class="about-container">
+        <h1>THE POMODORO PROTOCOL</h1>
+
+        <p>The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s. It uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks.</p>
+
+        <h2>HOW IT WORKS</h2>
+        <ul>
+            <li>1. Choose a task you want to focus on.</li>
+            <li>2. Set the timer to 25 minutes (FOCUS mode).</li>
+            <li>3. Work on the task without interruptions.</li>
+            <li>4. When the timer rings, take a 5-minute break (REBOOT mode).</li>
+            <li>5. After four focus sessions, take a longer 15-minute break (SLEEP mode).</li>
+        </ul>
+
+        <h2>WHY IT WORKS</h2>
+        <p>By breaking your work into manageable chunks, you reduce mental fatigue and procrastination. The strict time limits create a sense of urgency, while the regular breaks prevent burnout and keep your mind fresh.</p>
+
+        <a href="/" class="back-link">[ &lt;&lt; RETURN TO TIMER ]</a>
+    </div>
+</body>
+</html>

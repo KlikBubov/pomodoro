@@ -53,7 +53,6 @@ function updateDisplay() {
     const progress = (totalTime - timeLeft) / totalTime;
     $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
     const modeLabel = currentMode === 'work' ? 'FOCUS' : 'BREAK';
-    document.title = `[${formatTime(timeLeft)}] :: ${modeLabel}`;
 }
 
 function setMode(mode) {
@@ -167,10 +166,10 @@ function playChime() {
 function notify(message) {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
-        new Notification('🍅 POMODORO.EXE', { body: message });
+        new Notification('🍅 25X5.EXE', { body: message });
     } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(p => {
-            if (p === 'granted') new Notification('🍅 POMODORO.EXE', { body: message });
+            if (p === 'granted') new Notification('🍅 25X5.EXE', { body: message });
         });
     }
 }

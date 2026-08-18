@@ -3,19 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pomodoro :: CyberDeck</title>
+
+    <!-- Core SEO Meta Tags -->
+    <title>Pomodoro CyberDeck — Free Online Focus Timer</title>
+    <meta name="description" content="Increase your productivity with our free online 8-bit styled Pomodoro timer. 25-minute focus sessions, 5-minute breaks. No ads, no tracking, just pure focus.">
+    <meta name="keywords" content="pomodoro timer, online timer, focus timer, productivity tool, 25 minute timer, work timer">
+
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Pomodoro CyberDeck — Free Online Focus Timer">
+    <meta property="og:description" content="A stylish 8-bit themed Pomodoro timer to boost your productivity.">
+    <meta property="og:url" content="https://{{ domain }}/">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pomodoro CyberDeck — Free Online Focus Timer">
+    <meta name="twitter:description" content="A stylish 8-bit themed Pomodoro timer to boost your productivity.">
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Pomodoro CyberDeck",
+      "url": "https://{{ domain }}/",
+      "description": "Free online 8-bit styled Pomodoro timer to increase productivity.",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Web"
+    }
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- 8-bit Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 
-    <!-- Umami Analytics -->
     {% if umami_id %}
     <script defer src="{{ umami_url }}/script.js" data-website-id="{{ umami_id }}"></script>
     {% endif %}
 
-    <!-- GlitchTip JS SDK -->
     {% if sentry_dsn %}
     <script src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.94.1/build/bundle.min.js"></script>
     {% endif %}
@@ -23,7 +49,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        /* Feedback Widget 8-bit restyle */
         .feedback-widget { position: fixed; bottom: 20px; right: 20px; z-index: 50; font-family: 'VT323', monospace; }
         .feedback-toggle-btn {
             background: #0a0a12; border: 2px solid #00ffcc; color: #00ffcc;
@@ -49,7 +74,6 @@
     </style>
 </head>
 <body>
-    <!-- CRT Scanlines Overlay -->
     <div class="crt-overlay"></div>
 
     <main class="pomodoro-card">
@@ -93,10 +117,10 @@
                 <span class="dot"></span>
                 <span class="dot"></span>
             </div>
+            <a href="/about" style="display:block; margin-top:15px; color:#505070; text-decoration:none; font-size:16px;">[ WHAT IS POMODORO? ]</a>
         </footer>
     </main>
 
-    <!-- Floating Feedback Widget -->
     <div class="feedback-widget">
         <button id="feedback-toggle" class="feedback-toggle-btn">&gt; REPORT</button>
         <div id="feedback-form" class="feedback-form">
