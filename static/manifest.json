@@ -1,0 +1,17 @@
+{
+  "name": "25X5 CyberDeck",
+  "short_name": "25X5",
+  "description": "8-bit styled Pomodoro timer to boost productivity.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a12",
+  "theme_color": "#00ff99",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

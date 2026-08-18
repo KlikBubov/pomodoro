@@ -11,6 +11,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
+        /* Fix scrolling for this text page */
+        body {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+            align-items: flex-start !important;
+        }
         .about-container {
             max-width: 800px;
             margin: 40px auto;

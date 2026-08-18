@@ -1,7 +1,7 @@
 import os
 import sentry_sdk
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -36,7 +36,8 @@ Talisman(app,
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
              'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
-             'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru']
+             'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru',
+                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com']
          },
          force_https=not IS_DEBUG
          )
@@ -55,6 +56,7 @@ os.makedirs("data", exist_ok=True)
 UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
 UMAMI_ID = os.environ.get("UMAMI_ID", "")
 DOMAIN = os.environ.get("DOMAIN", "localhost")
+
 
 @app.route("/")
 def index():
@@ -120,6 +122,14 @@ def submit_feedback():
         f.write(f"[{datetime.now().isoformat()}] IP: {request.remote_addr} - {message}\n")
 
     return jsonify({"status": "ok", "message": "Feedback received"})
+
+
+# --- Serve Service Worker with Root Scope Permission ---
+@app.route('/static/js/sw.js')
+def service_worker():
+    response = send_from_directory('static/js', 'sw.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
 
 
 @app.route("/error")
