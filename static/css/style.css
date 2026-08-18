@@ -1,25 +1,22 @@
 :root {
-    --bg-1: #0f0c29;
-    --bg-2: #302b63;
-    --bg-3: #24243e;
-    --card-bg: rgba(255, 255, 255, 0.04);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --text-primary: #f6f6f8;
-    --text-secondary: rgba(246, 246, 248, 0.55);
+    --bg-1: #0a0a12;
+    --card-bg: #111119;
+    --card-border: #2a2a3a;
+    --text-primary: #e0e0ff;
+    --text-secondary: #505070;
 
-    --work-color: #ff6b6b;
-    --short-color: #4ecdc4;
-    --long-color: #a78bfa;
+    --work-color: #00ff99;
+    --short-color: #00ffff;
+    --long-color: #ff00ff;
     --accent: var(--work-color);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 html, body { height: 100%; }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
+    font-family: 'VT323', monospace;
+    background: var(--bg-1);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
@@ -29,13 +26,25 @@ body {
     overflow: hidden;
     position: relative;
     -webkit-font-smoothing: antialiased;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+/* CRT Scanlines */
+.crt-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
 }
 
 .ambient-glow {
     position: fixed;
     inset: -20%;
     background: radial-gradient(circle at 50% 50%, var(--accent) 0%, transparent 45%);
-    opacity: 0.18;
+    opacity: 0.12;
     filter: blur(80px);
     transition: background 0.6s ease, opacity 0.6s ease;
     z-index: 0;
@@ -46,14 +55,13 @@ body {
     position: relative;
     z-index: 1;
     background: var(--card-bg);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--card-border);
-    border-radius: 28px;
+    border: 2px solid var(--accent);
+    border-radius: 0;
     padding: 40px 36px;
     width: 100%;
     max-width: 440px;
-    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 255, 153, 0.1);
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
 .brand {
@@ -62,55 +70,55 @@ body {
     justify-content: center;
     gap: 10px;
     margin-bottom: 28px;
+    border-bottom: 1px solid var(--card-border);
+    padding-bottom: 15px;
 }
 
 .brand h1 {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: 4px;
-    text-transform: uppercase;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    letter-spacing: 1px;
     color: var(--text-secondary);
 }
 
 .brand-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
+    width: 12px;
+    height: 12px;
     background: var(--accent);
-    box-shadow: 0 0 12px var(--accent);
+    box-shadow: 0 0 10px var(--accent);
     transition: background 0.5s ease, box-shadow 0.5s ease;
 }
 
 .mode-tabs {
     display: flex;
     gap: 4px;
-    background: rgba(0, 0, 0, 0.25);
-    padding: 5px;
-    border-radius: 14px;
+    background: #050508;
+    padding: 4px;
     margin-bottom: 36px;
-    border: 1px solid rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
 }
 
 .mode-tab {
     flex: 1;
-    padding: 10px 8px;
+    padding: 10px 4px;
     border: none;
     background: transparent;
     color: var(--text-secondary);
-    border-radius: 10px;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    font-family: inherit;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mode-tab:hover { color: var(--text-primary); }
 
 .mode-tab.active {
     background: var(--accent);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    color: #000;
+    text-shadow: none;
+    box-shadow: inset 2px 2px 0px rgba(255,255,255,0.2);
 }
 
 .timer-container {
@@ -124,21 +132,21 @@ body {
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);
-    filter: drop-shadow(0 0 12px rgba(255,107,107,0.25));
+    filter: drop-shadow(0 0 8px var(--accent));
     transition: filter 0.5s ease;
 }
 
 .progress-ring-bg {
     fill: none;
     stroke: rgba(255, 255, 255, 0.05);
-    stroke-width: 6;
+    stroke-width: 8;
 }
 
 .progress-ring-fill {
     fill: none;
     stroke: var(--accent);
-    stroke-width: 6;
-    stroke-linecap: round;
+    stroke-width: 10;
+    stroke-linecap: square; /* Sharp edges for pixel feel */
     transition: stroke-dashoffset 0.95s linear, stroke 0.5s ease;
 }
 
@@ -152,79 +160,81 @@ body {
 }
 
 .time {
-    font-size: 68px;
-    font-weight: 700;
-    letter-spacing: -3px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 48px;
+    letter-spacing: -2px;
     font-variant-numeric: tabular-nums;
+    color: var(--accent);
     line-height: 1;
 }
 
 .status {
-    font-size: 12px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
     color: var(--text-secondary);
-    margin-top: 10px;
+    margin-top: 12px;
     text-transform: uppercase;
-    letter-spacing: 3px;
-    font-weight: 500;
+    letter-spacing: 1px;
 }
 
 .controls {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 28px;
 }
 
 .btn {
-    padding: 20px 24px;
-    border: none;
-    border-radius: 14px;
-    font-size: 18px;
-    font-weight: 600;
-    font-family: inherit;
+    padding: 18px 24px;
+    border: 2px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.1s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    text-shadow: 0 0 5px var(--accent);
 }
 
 .btn-start {
     flex: 1;
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
 }
 
 .btn-start:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    background: var(--accent);
+    color: #000;
+    text-shadow: none;
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
 }
 
-.btn-start:active { transform: translateY(0); }
+.btn-start:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px rgba(0,0,0,0.5);
+}
 
 .btn-reset {
     width: 64px;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-    border: 1px solid var(--card-border);
 }
 
 .btn-reset:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-}
-
-.btn-reset svg {
-    width: 24px;
-    height: 24px;
+    background: var(--accent);
+    color: #000;
+    text-shadow: none;
 }
 
 .session-counter {
     text-align: center;
     color: var(--text-secondary);
-    font-size: 12px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
     letter-spacing: 2px;
     text-transform: uppercase;
+    border-top: 1px solid var(--card-border);
+    padding-top: 15px;
 }
 
 .dots {
@@ -235,16 +245,16 @@ body {
 }
 
 .dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
+    width: 12px;
+    height: 12px;
     background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--card-border);
     transition: all 0.4s ease;
 }
 
 .dot.completed {
     background: var(--accent);
-    box-shadow: 0 0 10px var(--accent);
+    box-shadow: 0 0 8px var(--accent);
 }
 
 .running .timer-container {
@@ -257,8 +267,8 @@ body {
 }
 
 @media (max-width: 480px) {
-    .pomodoro-card { padding: 32px 24px; }
+    .pomodoro-card { padding: 30px 24px; }
     .timer-container { width: 240px; height: 240px; }
-    .time { font-size: 56px; }
-    .mode-tab { font-size: 12px; padding: 9px 4px; }
+    .time { font-size: 40px; }
+    .mode-tab { font-size: 16px; }
 }

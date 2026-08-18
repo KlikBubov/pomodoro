@@ -10,8 +10,16 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+# Ensure data directory exists
+os.makedirs("data", exist_ok=True)
+
+UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
+UMAMI_ID = os.environ.get("UMAMI_ID", "")
+IS_DEBUG = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
+
 # --- GlitchTip (Error Tracking) Initialization ---
 SENTRY_DSN = os.environ.get("SENTRY_DSN")
+
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
@@ -36,7 +44,7 @@ Talisman(app,
              'img-src': ["'self'", 'data:'],
              'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru']
          },
-         force_https=True
+         force_https=not IS_DEBUG
          )
 
 # --- App Configuration ---
@@ -46,12 +54,6 @@ SETTINGS = {
     "long_break": 15,
     "long_break_interval": 4,
 }
-
-# Ensure data directory exists
-os.makedirs("data", exist_ok=True)
-
-UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
-UMAMI_ID = os.environ.get("UMAMI_ID", "")
 
 
 @app.route("/")
@@ -98,5 +100,4 @@ def trigger_error():
 
 
 if __name__ == "__main__":
-    is_debug = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
-    app.run(debug=is_debug, port=5000)
+    app.run(debug=IS_DEBUG, port=5000)

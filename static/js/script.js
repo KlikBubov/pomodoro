@@ -1,23 +1,21 @@
-// --- Global Error Handler (Replaces Sentry JS) ---
+// --- Global Error Handler ---
 window.onerror = function(message, source, lineno, colno, error) {
     const errorData = {
         message: message,
         stack: error && error.stack ? error.stack : `${source}:${lineno}:${colno}`
     };
-
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorData)
     }).catch(() => {});
-
     return false;
 };
 
 const MODES = {
-    work:  { duration: SETTINGS.work * 60,        label: 'Time to focus',     color: '#ff6b6b' },
-    short: { duration: SETTINGS.short_break * 60, label: 'Short break',       color: '#4ecdc4' },
-    long:  { duration: SETTINGS.long_break * 60, label: 'Long break',        color: '#a78bfa' },
+    work:  { duration: SETTINGS.work * 60,        label: '> INITIALIZE FOCUS', color: '#00ff99' },
+    short: { duration: SETTINGS.short_break * 60, label: '> QUICK_REBOOT',     color: '#00ffff' },
+    long:  { duration: SETTINGS.long_break * 60, label: '> DEEP_SLEEP',        color: '#ff00ff' },
 };
 
 const LONG_BREAK_INTERVAL = SETTINGS.long_break_interval;
@@ -29,7 +27,6 @@ let isRunning = false;
 let intervalId = null;
 let completedSessions = 0;
 
-// DOM
 const $time      = document.querySelector('.time');
 const $status    = document.querySelector('.status');
 const $startBtn  = document.querySelector('.btn-start');
@@ -40,7 +37,6 @@ const $dots      = document.querySelectorAll('.dot');
 const $sessionNum= document.querySelector('.session-num');
 const $body      = document.body;
 
-// Ring math
 const RADIUS = $ring.r.baseVal.value;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  $ring.style.strokeDasharray = CIRCUMFERENCE;
@@ -54,12 +50,10 @@ function formatTime(seconds) {
 
 function updateDisplay() {
     $time.textContent = formatTime(timeLeft);
-
     const progress = (totalTime - timeLeft) / totalTime;
     $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
-
-    const modeLabel = currentMode === 'work' ? 'Focus' : 'Break';
-    document.title = `${formatTime(timeLeft)} · ${modeLabel}`;
+    const modeLabel = currentMode === 'work' ? 'FOCUS' : 'BREAK';
+    document.title = `[${formatTime(timeLeft)}] :: ${modeLabel}`;
 }
 
 function setMode(mode) {
@@ -72,7 +66,7 @@ function setMode(mode) {
     $tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
     $status.textContent = MODES[mode].label;
     document.documentElement.style.setProperty('--accent', MODES[mode].color);
-    $startBtn.textContent = 'Start';
+    $startBtn.textContent = '[ START ]';
     $body.classList.remove('running');
 
     updateDisplay();
@@ -83,15 +77,13 @@ function startTimer() {
         pauseTimer();
         return;
     }
-
     isRunning = true;
-    $startBtn.textContent = 'Pause';
+    $startBtn.textContent = '[ PAUSE ]';
     $body.classList.add('running');
 
     intervalId = setInterval(() => {
         timeLeft--;
         updateDisplay();
-
         if (timeLeft <= 0) {
             clearInterval(intervalId);
             isRunning = false;
@@ -104,26 +96,26 @@ function startTimer() {
 function pauseTimer() {
     isRunning = false;
     clearInterval(intervalId);
-    $startBtn.textContent = 'Start';
+    $startBtn.textContent = '[ RESUME ]';
     $body.classList.remove('running');
 }
 
 function resetTimer() {
     pauseTimer();
+    $startBtn.textContent = '[ START ]';
     timeLeft = MODES[currentMode].duration;
     updateDisplay();
 }
 
 function handleComplete() {
     playChime();
-    notify(`${currentMode === 'work' ? 'Focus' : 'Break'} session complete!`);
+    notify(`> PROCESS COMPLETE: ${currentMode === 'work' ? 'FOCUS' : 'BREAK'}`);
 
     if (currentMode === 'work') {
         completedSessions++;
         updateDots();
         $sessionNum.textContent = Math.floor(completedSessions / LONG_BREAK_INTERVAL) + 1;
 
-        // Log to backend
         fetch('/api/log-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -131,9 +123,9 @@ function handleComplete() {
         }).catch(() => {});
 
         const nextMode = (completedSessions % LONG_BREAK_INTERVAL === 0) ? 'long' : 'short';
-        setMode(nextMode); // Auto-start removed, waits for user to press Start
+        setMode(nextMode);
     } else {
-        setMode('work'); // Auto-start removed, waits for user to press Start
+        setMode('work');
     }
 }
 
@@ -142,55 +134,47 @@ function updateDots() {
     $dots.forEach((dot, i) => dot.classList.toggle('completed', i < cycle));
 }
 
-// --- Sound: Loud 3-note chime via Web Audio API ---
+// --- 8-bit Sound (Chiptune via Web Audio API) ---
 let audioCtx = null;
 function playChime() {
     try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
 
         const now = audioCtx.currentTime;
-
-        // Ascending 3-note alarm (C5, E5, G5)
-        [523.25, 659.25, 783.99].forEach((freq, i) => {
+        // Retro 4-note arpeggio (A4, C5, E5, A5)
+        [440, 523.25, 659.25, 880].forEach((freq, i) => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.type = 'sine'; // 'triangle' or 'sine'
+            osc.type = 'square'; // Square wave for authentic 8-bit sound
             osc.frequency.value = freq;
 
-            const t = now + i * 0.25; // Delay between notes
+            const t = now + i * 0.15; // Fast succession
             gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.5, t + 0.02); // Louder volume (0.5)
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5); // Longer decay (1.5s)
+            gain.gain.linearRampToValueAtTime(0.15, t + 0.02); // Lower volume to avoid harshness
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); // Short blip
 
             osc.start(t);
-            osc.stop(t + 1.55);
+            osc.stop(t + 0.25);
         });
     } catch (e) {
         console.warn("Audio playback failed:", e);
     }
 }
 
-// --- Browser notifications ---
 function notify(message) {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
-        new Notification('🍅 Pomodoro', { body: message });
+        new Notification('🍅 POMODORO.EXE', { body: message });
     } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(p => {
-            if (p === 'granted') new Notification('🍅 Pomodoro', { body: message });
+            if (p === 'granted') new Notification('🍅 POMODORO.EXE', { body: message });
         });
     }
 }
 
-// --- Wire up events ---
  $tabs.forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
  $startBtn.addEventListener('click', startTimer);
  $resetBtn.addEventListener('click', resetTimer);
@@ -201,7 +185,6 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'KeyR')  { resetTimer(); }
 });
 
-// Init
 updateDisplay();
 
 // --- Floating Feedback Widget Logic ---
@@ -219,7 +202,7 @@ if ($feedbackToggle) {
         const message = $feedbackText.value.trim();
         if (!message) return;
 
-        $submitFeedbackBtn.textContent = 'Sending...';
+        $submitFeedbackBtn.textContent = '...';
         $submitFeedbackBtn.disabled = true;
 
         try {
@@ -232,18 +215,18 @@ if ($feedbackToggle) {
             if (response.ok) {
                 $feedbackText.value = '';
                 $feedbackForm.classList.remove('active');
-                $feedbackToggle.textContent = 'Thank you for your feedback! ✓';
+                $feedbackToggle.textContent = '> TRANSMITTED OK';
                 setTimeout(() => {
-                    $feedbackToggle.textContent = 'Report an issue or send feedback';
+                    $feedbackToggle.textContent = '> REPORT';
                 }, 3000);
             } else {
                 const data = await response.json();
-                alert(data.message || 'Failed to send');
+                alert(data.message || 'TRANSMISSION FAILED');
             }
         } catch (err) {
-            alert('Network error. Please try later.');
+            alert('NETWORK ERROR. RETRY LATER.');
         } finally {
-            $submitFeedbackBtn.textContent = 'Send';
+            $submitFeedbackBtn.textContent = 'TRANSMIT';
             $submitFeedbackBtn.disabled = false;
         }
     });

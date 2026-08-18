@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pomodoro · Focus Timer</title>
+    <title>Pomodoro :: CyberDeck</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- 8-bit Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 
     <!-- Umami Analytics -->
     {% if umami_id %}
@@ -22,143 +23,97 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        /* Floating Feedback Widget Styles */
-        .feedback-widget {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 50;
-            font-family: 'Inter', sans-serif;
-        }
+        /* Feedback Widget 8-bit restyle */
+        .feedback-widget { position: fixed; bottom: 20px; right: 20px; z-index: 50; font-family: 'VT323', monospace; }
         .feedback-toggle-btn {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.7);
-            padding: 10px 18px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background: #0a0a12; border: 2px solid #00ffcc; color: #00ffcc;
+            padding: 8px 16px; cursor: pointer; font-size: 16px; text-transform: uppercase; letter-spacing: 2px;
+            box-shadow: 4px 4px 0px #ff00ff; transition: all 0.1s;
         }
-        .feedback-toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            transform: translateY(-2px);
-        }
+        .feedback-toggle-btn:hover { background: #00ffcc; color: #0a0a12; transform: translate(2px, 2px); box-shadow: 2px 2px 0px #ff00ff; }
         .feedback-form {
-            display: none;
-            margin-top: 10px;
-            background: rgba(36, 36, 62, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 16px;
-            width: 280px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            flex-direction: column;
-            gap: 10px;
+            display: none; margin-top: 20px; background: #0a0a12; border: 2px solid #ff00ff;
+            padding: 16px; width: 320px; box-shadow: 4px 4px 0px #00ffcc; flex-direction: column; gap: 12px;
         }
         .feedback-form.active { display: flex; }
         .feedback-form textarea {
-            width: 100%;
-            height: 80px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: #fff;
-            padding: 10px;
-            font-family: inherit;
-            font-size: 13px;
-            resize: none;
-            box-sizing: border-box;
+            width: 100%; height: 90px; background: #050508; border: 1px solid #00ffcc; color: #00ffcc;
+            padding: 10px; font-family: 'VT323', monospace; font-size: 18px; resize: none; box-sizing: border-box;
         }
-        .feedback-form textarea:focus { outline: none; border-color: #ff6b6b; }
+        .feedback-form textarea:focus { outline: none; border-color: #ff00ff; box-shadow: 0 0 5px #ff00ff; }
         .feedback-send-btn {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            background: #ff6b6b;
-            color: #fff;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: 0.2s;
+            background: #00ffcc; border: none; color: #0a0a12; cursor: pointer; font-family: 'Press Start 2P', cursive;
+            font-size: 12px; padding: 12px; text-transform: uppercase; letter-spacing: 1px;
         }
-        .feedback-send-btn:hover { background: #ff5252; }
-        .feedback-send-btn:disabled { background: #555; cursor: not-allowed; }
+        .feedback-send-btn:hover { background: #ff00ff; color: #0a0a12; }
     </style>
 </head>
 <body>
-<div class="ambient-glow"></div>
+    <!-- CRT Scanlines Overlay -->
+    <div class="crt-overlay"></div>
 
-<main class="pomodoro-card">
-    <header class="brand">
-        <span class="brand-dot"></span>
-        <h1>Pomodoro</h1>
-    </header>
+    <main class="pomodoro-card">
+        <header class="brand">
+            <span class="brand-dot"></span>
+            <h1>25X5.EXE</h1>
+        </header>
 
-    <nav class="mode-tabs" role="tablist">
-        <button class="mode-tab active" data-mode="work">Focus</button>
-        <button class="mode-tab" data-mode="short">Short Break</button>
-        <button class="mode-tab" data-mode="long">Long Break</button>
-    </nav>
+        <nav class="mode-tabs" role="tablist">
+            <button class="mode-tab active" data-mode="work">FOCUS</button>
+            <button class="mode-tab" data-mode="short">REBOOT</button>
+            <button class="mode-tab" data-mode="long">SLEEP</button>
+        </nav>
 
-    <div class="timer-container">
-        <svg class="progress-ring" viewBox="0 0 280 280">
-            <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
-            <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
-        </svg>
-        <div class="timer-display">
-            <div class="time">25:00</div>
-            <div class="status">Time to focus</div>
-        </div>
-    </div>
-
-    <div class="controls">
-        <button class="btn btn-start">Start</button>
-        <button class="btn btn-reset" aria-label="Reset timer">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
-                <path d="M3 3v5h5"></path>
+        <div class="timer-container">
+            <svg class="progress-ring" viewBox="0 0 280 280">
+                <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
+                <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
             </svg>
-        </button>
-    </div>
-
-    <footer class="session-counter">
-        <span class="session-label">Round <span class="session-num">1</span></span>
-        <div class="dots" aria-hidden="true">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
+            <div class="timer-display">
+                <div class="time">25:00</div>
+                <div class="status">&gt; INITIALIZE FOCUS</div>
+            </div>
         </div>
-    </footer>
-</main>
 
-<!-- Floating Feedback Widget -->
-<div class="feedback-widget">
-    <button id="feedback-toggle" class="feedback-toggle-btn">Report an issue</button>
-    <div id="feedback-form" class="feedback-form">
-        <textarea id="feedback-text" placeholder="Found a bug? Have an idea? Write it here..."></textarea>
-        <button id="submit-feedback" class="feedback-send-btn">Send</button>
+        <div class="controls">
+            <button class="btn btn-start">[ START ]</button>
+            <button class="btn btn-reset" aria-label="Reset timer">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                </svg>
+            </button>
+        </div>
+
+        <footer class="session-counter">
+            <span class="session-label">CYCLE <span class="session-num">1</span></span>
+            <div class="dots" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Floating Feedback Widget -->
+    <div class="feedback-widget">
+        <button id="feedback-toggle" class="feedback-toggle-btn">&gt; REPORT</button>
+        <div id="feedback-form" class="feedback-form">
+            <textarea id="feedback-text" placeholder="LOG ERROR OR SUGGESTION..."></textarea>
+            <button id="submit-feedback" class="feedback-send-btn">TRANSMIT</button>
+        </div>
     </div>
-</div>
 
-<script>
-    const SETTINGS = {{ settings | tojson }};
+    <script>
+        const SETTINGS = {{ settings | tojson }};
 
-    // GlitchTip JS initialization
-    {% if sentry_dsn %}
-    if (window.Sentry) {
-        Sentry.init({ dsn: "{{ sentry_dsn }}" });
-    }
-    {% endif %}
-</script>
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+        {% if sentry_dsn %}
+        if (window.Sentry) {
+            Sentry.init({ dsn: "{{ sentry_dsn }}" });
+        }
+        {% endif %}
+    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
