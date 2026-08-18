@@ -1,21 +1,23 @@
-// --- Global Error Handler ---
+// --- Global Error Handler (Replaces Sentry JS) ---
 window.onerror = function(message, source, lineno, colno, error) {
     const errorData = {
         message: message,
         stack: error && error.stack ? error.stack : `${source}:${lineno}:${colno}`
     };
+
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorData)
     }).catch(() => {});
+
     return false;
 };
 
 const MODES = {
-    work:  { duration: SETTINGS.work * 60,        label: '> INITIALIZE FOCUS', color: '#00ff99' },
-    short: { duration: SETTINGS.short_break * 60, label: '> QUICK_REBOOT',     color: '#00ffff' },
-    long:  { duration: SETTINGS.long_break * 60, label: '> DEEP_SLEEP',        color: '#ff00ff' },
+    work:  { duration: SETTINGS.work * 60,        label: '> INITIALIZE FOCUS', color: '#ff0033' }, // Aggressive Neon Red
+    short: { duration: SETTINGS.short_break * 60, label: '> QUICK_REBOOT',     color: '#00ccff' }, // Relaxing Neon Blue
+    long:  { duration: SETTINGS.long_break * 60, label: '> DEEP_SLEEP',        color: '#9d00ff' }, // Relaxing Neon Purple
 };
 
 const LONG_BREAK_INTERVAL = SETTINGS.long_break_interval;
@@ -26,7 +28,9 @@ let totalTime = MODES.work.duration;
 let isRunning = false;
 let intervalId = null;
 let completedSessions = 0;
+let endTime = null; // Timestamp when the timer should finish
 
+// DOM
 const $time      = document.querySelector('.time');
 const $status    = document.querySelector('.status');
 const $startBtn  = document.querySelector('.btn-start');
@@ -37,6 +41,7 @@ const $dots      = document.querySelectorAll('.dot');
 const $sessionNum= document.querySelector('.session-num');
 const $body      = document.body;
 
+// Ring math
 const RADIUS = $ring.r.baseVal.value;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  $ring.style.strokeDasharray = CIRCUMFERENCE;
@@ -52,7 +57,10 @@ function updateDisplay() {
     $time.textContent = formatTime(timeLeft);
     const progress = (totalTime - timeLeft) / totalTime;
     $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+
+    // Возвращаем динамический заголовок
     const modeLabel = currentMode === 'work' ? 'FOCUS' : 'BREAK';
+    document.title = `[${formatTime(timeLeft)}] :: ${modeLabel}`;
 }
 
 function setMode(mode) {
@@ -76,13 +84,20 @@ function startTimer() {
         pauseTimer();
         return;
     }
+
     isRunning = true;
     $startBtn.textContent = '[ PAUSE ]';
     $body.classList.add('running');
 
+    // Calculate exact end time based on current time and remaining seconds
+    endTime = Date.now() + (timeLeft * 1000);
+
     intervalId = setInterval(() => {
-        timeLeft--;
+        // Calculate remaining time using system clock (immune to background tab throttling)
+        const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+        timeLeft = remaining;
         updateDisplay();
+
         if (timeLeft <= 0) {
             clearInterval(intervalId);
             isRunning = false;
@@ -141,19 +156,18 @@ function playChime() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
         const now = audioCtx.currentTime;
-        // Retro 4-note arpeggio (A4, C5, E5, A5)
         [440, 523.25, 659.25, 880].forEach((freq, i) => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.type = 'square'; // Square wave for authentic 8-bit sound
+            osc.type = 'square';
             osc.frequency.value = freq;
 
-            const t = now + i * 0.15; // Fast succession
+            const t = now + i * 0.15;
             gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.15, t + 0.02); // Lower volume to avoid harshness
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2); // Short blip
+            gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
 
             osc.start(t);
             osc.stop(t + 0.25);
@@ -166,10 +180,10 @@ function playChime() {
 function notify(message) {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
-        new Notification('🍅 25X5.EXE', { body: message });
+        new Notification('25X5.EXE', { body: message });
     } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(p => {
-            if (p === 'granted') new Notification('🍅 25X5.EXE', { body: message });
+            if (p === 'granted') new Notification('25X5.EXE', { body: message });
         });
     }
 }
@@ -182,6 +196,22 @@ document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.code === 'Space') { e.preventDefault(); startTimer(); }
     if (e.code === 'KeyR')  { resetTimer(); }
+});
+
+// Fix for background tabs: Update UI immediately when tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && isRunning && endTime) {
+        const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+        timeLeft = remaining;
+        updateDisplay();
+
+        if (timeLeft <= 0) {
+            clearInterval(intervalId);
+            isRunning = false;
+            $body.classList.remove('running');
+            handleComplete();
+        }
+    }
 });
 
 updateDisplay();
