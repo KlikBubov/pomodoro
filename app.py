@@ -54,11 +54,9 @@ os.makedirs("data", exist_ok=True)
 
 UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
 UMAMI_ID = os.environ.get("UMAMI_ID", "")
-DOMAIN = os.environ.get("DOMAIN", "localhost") \
- \
-         @ app.route("/")
+DOMAIN = os.environ.get("DOMAIN", "localhost")
 
-
+@app.route("/")
 def index():
     return render_template(
         "index.html",
