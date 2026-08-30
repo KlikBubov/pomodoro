@@ -15,9 +15,9 @@ window.onerror = function(message, source, lineno, colno, error) {
 };
 
 const MODES = {
-    work:  { duration: SETTINGS.work * 60,        label: '> INITIALIZE FOCUS', color: '#ff0033' }, // Aggressive Neon Red
-    short: { duration: SETTINGS.short_break * 60, label: '> QUICK_REBOOT',     color: '#00ccff' }, // Relaxing Neon Blue
-    long:  { duration: SETTINGS.long_break * 60, label: '> DEEP_SLEEP',        color: '#9d00ff' }, // Relaxing Neon Purple
+    work:  { duration: SETTINGS.work * 60,        label: '> INITIALIZE FOCUS', color: '#e06c75' },
+    short: { duration: SETTINGS.short_break * 60, label: '> QUICK_REBOOT',     color: '#56b6c2' },
+    long:  { duration: SETTINGS.long_break * 60, label: '> DEEP_SLEEP',        color: '#c678dd' },
 };
 
 const LONG_BREAK_INTERVAL = SETTINGS.long_break_interval;

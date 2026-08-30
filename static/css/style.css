@@ -1,13 +1,13 @@
 :root {
-    --bg-1: #0a0a12;
-    --card-bg: #111119;
-    --card-border: #2a2a3a;
-    --text-primary: #e0e0ff;
-    --text-secondary: #505070;
+    --bg-1: #0d0d14;
+    --card-bg: #14141d;
+    --card-border: #2b2b3a;
+    --text-primary: #d4d4e0;
+    --text-secondary: #606072;
 
-    --work-color: #ff0033;   /* Aggressive Red */
-    --short-color: #00ccff;  /* Relaxing Blue */
-    --long-color: #9d00ff;   /* Relaxing Purple */
+    --work-color: #e06c75;   /* Спокойный терракотово-красный (Focus) */
+    --short-color: #56b6c2;  /* Приглушенный бирюзовый (Reboot) */
+    --long-color: #c678dd;   /* Мягкий сиреневый (Sleep) */
     --accent: var(--work-color);
 }
 
@@ -26,7 +26,7 @@ body {
     overflow: hidden;
     position: relative;
     -webkit-font-smoothing: antialiased;
-    text-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 /* CRT Scanlines */
@@ -132,7 +132,7 @@ body {
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);
-    filter: drop-shadow(0 0 8px var(--accent));
+    filter: drop-shadow(0 0 5px var(--accent));
     transition: filter 0.5s ease;
 }
 
