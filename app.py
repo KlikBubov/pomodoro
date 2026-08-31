@@ -37,7 +37,8 @@ Talisman(app,
              'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
              'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru',
-                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com']
+                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
+                             'https://cdn.jsdelivr.net']
          },
          force_https=not IS_DEBUG
          )

@@ -1,4 +1,4 @@
-const CACHE_NAME = '25x5-cache-v2';
+const CACHE_NAME = '25x5-cache-v3'; // Увеличьте версию, чтобы старый кэш сбросился
 const urlsToCache = [
   '/',
   '/static/css/style.css',
@@ -32,8 +32,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Ignore non-http(s) requests (e.g., chrome-extension://)
+  // Игнорируем запросы от расширений браузера
   if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
+  // Игнорируем POST/PUT/DELETE запросы (Cache API поддерживает только GET)
+  if (event.request.method !== 'GET') {
     return;
   }
 
@@ -41,10 +46,10 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => {
         if (response) {
-          return response; // Return from cache if found
+          return response; // Возвращаем из кэша, если найдено
         }
 
-        // Fetch from network and cache dynamically
+        // Иначе идем в сеть и кэшируем результат
         return fetch(event.request).then(networkResponse => {
           if (!networkResponse || (networkResponse.status !== 200 && networkResponse.type !== 'opaque')) {
             return networkResponse;
