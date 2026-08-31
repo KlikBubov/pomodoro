@@ -1,23 +1,21 @@
-// --- Global Error Handler (Replaces Sentry JS) ---
+// --- Global Error Handler ---
 window.onerror = function(message, source, lineno, colno, error) {
     const errorData = {
         message: message,
         stack: error && error.stack ? error.stack : `${source}:${lineno}:${colno}`
     };
-
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorData)
     }).catch(() => {});
-
     return false;
 };
 
 const MODES = {
-    work:  { duration: SETTINGS.work * 60,        label: '> INITIALIZE FOCUS', color: '#e06c75' },
-    short: { duration: SETTINGS.short_break * 60, label: '> QUICK_REBOOT',     color: '#56b6c2' },
-    long:  { duration: SETTINGS.long_break * 60, label: '> DEEP_SLEEP',        color: '#c678dd' },
+    work:  { duration: SETTINGS.work * 60,        label: 'Time to focus', color: '#e07a5f', tint: '#fdf4f0' },
+    short: { duration: SETTINGS.short_break * 60, label: 'Short break',   color: '#81b29a', tint: '#f4f9f6' },
+    long:  { duration: SETTINGS.long_break * 60,  label: 'Long break',    color: '#a294c9', tint: '#f7f5fb' },
 };
 
 const LONG_BREAK_INTERVAL = SETTINGS.long_break_interval;
@@ -28,9 +26,8 @@ let totalTime = MODES.work.duration;
 let isRunning = false;
 let intervalId = null;
 let completedSessions = 0;
-let endTime = null; // Timestamp when the timer should finish
+let endTime = null;
 
-// DOM
 const $time      = document.querySelector('.time');
 const $status    = document.querySelector('.status');
 const $startBtn  = document.querySelector('.btn-start');
@@ -41,7 +38,6 @@ const $dots      = document.querySelectorAll('.dot');
 const $sessionNum= document.querySelector('.session-num');
 const $body      = document.body;
 
-// Ring math
 const RADIUS = $ring.r.baseVal.value;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  $ring.style.strokeDasharray = CIRCUMFERENCE;
@@ -57,10 +53,8 @@ function updateDisplay() {
     $time.textContent = formatTime(timeLeft);
     const progress = (totalTime - timeLeft) / totalTime;
     $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
-
-    // Возвращаем динамический заголовок
-    const modeLabel = currentMode === 'work' ? 'FOCUS' : 'BREAK';
-    document.title = `[${formatTime(timeLeft)}] :: ${modeLabel}`;
+    const modeLabel = currentMode === 'work' ? 'Focus' : 'Break';
+    document.title = `${formatTime(timeLeft)} · ${modeLabel}`;
 }
 
 function setMode(mode) {
@@ -72,8 +66,12 @@ function setMode(mode) {
 
     $tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
     $status.textContent = MODES[mode].label;
+
+    // Меняем акцентный цвет и цвет фона карточки
     document.documentElement.style.setProperty('--accent', MODES[mode].color);
-    $startBtn.textContent = '[ START ]';
+    document.documentElement.style.setProperty('--accent-tint', MODES[mode].tint);
+
+    $startBtn.textContent = 'Start';
     $body.classList.remove('running');
 
     updateDisplay();
@@ -86,14 +84,12 @@ function startTimer() {
     }
 
     isRunning = true;
-    $startBtn.textContent = '[ PAUSE ]';
+    $startBtn.textContent = 'Pause';
     $body.classList.add('running');
 
-    // Calculate exact end time based on current time and remaining seconds
     endTime = Date.now() + (timeLeft * 1000);
 
     intervalId = setInterval(() => {
-        // Calculate remaining time using system clock (immune to background tab throttling)
         const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
         timeLeft = remaining;
         updateDisplay();
@@ -110,20 +106,20 @@ function startTimer() {
 function pauseTimer() {
     isRunning = false;
     clearInterval(intervalId);
-    $startBtn.textContent = '[ RESUME ]';
+    $startBtn.textContent = 'Resume';
     $body.classList.remove('running');
 }
 
 function resetTimer() {
     pauseTimer();
-    $startBtn.textContent = '[ START ]';
+    $startBtn.textContent = 'Start';
     timeLeft = MODES[currentMode].duration;
     updateDisplay();
 }
 
 function handleComplete() {
     playChime();
-    notify(`> PROCESS COMPLETE: ${currentMode === 'work' ? 'FOCUS' : 'BREAK'}`);
+    notify(`Pomodoro: ${currentMode === 'work' ? 'Focus' : 'Break'} session complete`);
 
     if (currentMode === 'work') {
         completedSessions++;
@@ -148,7 +144,7 @@ function updateDots() {
     $dots.forEach((dot, i) => dot.classList.toggle('completed', i < cycle));
 }
 
-// --- 8-bit Sound (Chiptune via Web Audio API) ---
+// --- Soft Sound (Tibetan Bowl / Marimba feel via Web Audio API) ---
 let audioCtx = null;
 function playChime() {
     try {
@@ -156,21 +152,21 @@ function playChime() {
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
         const now = audioCtx.currentTime;
-        [440, 523.25, 659.25, 880].forEach((freq, i) => {
+        [659.25, 880.00].forEach((freq, i) => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.type = 'square';
+            osc.type = 'sine';
             osc.frequency.value = freq;
 
-            const t = now + i * 0.15;
+            const t = now + i * 0.1;
             gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+            gain.gain.linearRampToValueAtTime(0.2, t + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
 
             osc.start(t);
-            osc.stop(t + 0.25);
+            osc.stop(t + 1.6);
         });
     } catch (e) {
         console.warn("Audio playback failed:", e);
@@ -180,10 +176,10 @@ function playChime() {
 function notify(message) {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
-        new Notification('25X5.EXE', { body: message });
+        new Notification('Pomodoro', { body: message });
     } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(p => {
-            if (p === 'granted') new Notification('25X5.EXE', { body: message });
+            if (p === 'granted') new Notification('Pomodoro', { body: message });
         });
     }
 }
@@ -198,7 +194,6 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'KeyR')  { resetTimer(); }
 });
 
-// Fix for background tabs: Update UI immediately when tab becomes visible again
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden && isRunning && endTime) {
         const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
@@ -216,7 +211,7 @@ document.addEventListener('visibilitychange', () => {
 
 updateDisplay();
 
-// --- Floating Feedback Widget Logic ---
+// --- Feedback Widget Logic ---
 const $feedbackToggle = document.getElementById('feedback-toggle');
 const $feedbackForm = document.getElementById('feedback-form');
 const $submitFeedbackBtn = document.getElementById('submit-feedback');
@@ -231,7 +226,7 @@ if ($feedbackToggle) {
         const message = $feedbackText.value.trim();
         if (!message) return;
 
-        $submitFeedbackBtn.textContent = '...';
+        $submitFeedbackBtn.textContent = 'Sending...';
         $submitFeedbackBtn.disabled = true;
 
         try {
@@ -244,18 +239,18 @@ if ($feedbackToggle) {
             if (response.ok) {
                 $feedbackText.value = '';
                 $feedbackForm.classList.remove('active');
-                $feedbackToggle.textContent = '> TRANSMITTED OK';
+                $feedbackToggle.textContent = 'Thank you ✓';
                 setTimeout(() => {
-                    $feedbackToggle.textContent = '> REPORT';
+                    $feedbackToggle.textContent = 'Feedback';
                 }, 3000);
             } else {
                 const data = await response.json();
-                alert(data.message || 'TRANSMISSION FAILED');
+                alert(data.message || 'Failed to send');
             }
         } catch (err) {
-            alert('NETWORK ERROR. RETRY LATER.');
+            alert('Network error. Please try later.');
         } finally {
-            $submitFeedbackBtn.textContent = 'TRANSMIT';
+            $submitFeedbackBtn.textContent = 'Send';
             $submitFeedbackBtn.disabled = false;
         }
     });

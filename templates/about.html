@@ -3,84 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Pomodoro Technique — CyberDeck</title>
+    <title>About Pomodoro Technique</title>
     <meta name="description" content="Learn about the Pomodoro Technique and how it boosts productivity. 25 minutes of focus, 5 minutes of break.">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
     <style>
-        /* Fix scrolling for this text page */
+        /* Разрешаем скролл и выравниваем по верху страницы */
         body {
             overflow-y: auto !important;
             height: auto !important;
             min-height: 100vh;
             align-items: flex-start !important;
+            padding: 40px 24px;
+            background: var(--bg-1); /* Статичный спокойный фон */
         }
-        .about-container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 40px;
-            background: #111119;
-            border: 2px solid #00ffcc;
-            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.6);
+
+        /* Карточка использует те же переменные, что и таймер */
+        .about-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 620px;
+            margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(60, 60, 80, 0.06);
         }
-        .about-container h1 {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 20px;
-            color: #00ff99;
-            margin-bottom: 20px;
+
+        /* Заголовки используют глобальные цвета */
+        .about-card h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
             text-align: center;
         }
-        .about-container h2 {
-            font-family: 'Press Start 2P', cursive;
+
+        .about-card h2 {
+            font-family: 'Inter', sans-serif;
             font-size: 14px;
-            color: #00ffff;
-            margin-top: 30px;
-            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 36px;
+            margin-bottom: 16px;
         }
-        .about-container p, .about-container li {
-            font-family: 'VT323', monospace;
-            font-size: 20px;
-            color: #e0e0ff;
-            line-height: 1.6;
-            margin-bottom: 15px;
+
+        /* Текст использует глобальный цвет */
+        .about-card p {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.7;
+            margin-bottom: 16px;
         }
-        .about-container a {
-            color: #ff00ff;
-            text-decoration: none;
-            border-bottom: 1px solid #ff00ff;
+
+        /* Список без маркеров, с пастельными точками */
+        .about-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        .back-link {
+
+        .about-card ul li {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--text-primary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+            padding-left: 24px;
+            position: relative;
+        }
+
+        .about-card ul li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 9px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--work-color); /* Пастельная терракотовая точка */
+        }
+
+        /* Кнопка возврата в стиле кнопки Start */
+        .btn-back {
             display: block;
+            width: 100%;
+            margin-top: 48px;
+            padding: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
             text-align: center;
-            margin-top: 40px;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
+            color: var(--card-bg);
+            background: var(--text-primary);
+            border: none;
+            border-radius: 12px;
+            text-decoration: none !important; /* Никаких подчеркиваний */
+            transition: opacity 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .btn-back:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
 <body>
-    <div class="crt-overlay"></div>
-    <div class="about-container">
-        <h1>THE POMODORO PROTOCOL</h1>
+    <main class="about-card">
+        <h1>The Pomodoro Technique</h1>
 
         <p>The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s. It uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks.</p>
 
-        <h2>HOW IT WORKS</h2>
+        <h2>How it works</h2>
         <ul>
-            <li>1. Choose a task you want to focus on.</li>
-            <li>2. Set the timer to 25 minutes (FOCUS mode).</li>
-            <li>3. Work on the task without interruptions.</li>
-            <li>4. When the timer rings, take a 5-minute break (REBOOT mode).</li>
-            <li>5. After four focus sessions, take a longer 15-minute break (SLEEP mode).</li>
+            <li>Choose a task you want to focus on.</li>
+            <li>Set the timer to 25 minutes (Focus mode).</li>
+            <li>Work on the task without interruptions.</li>
+            <li>When the timer rings, take a 5-minute break (Short Break).</li>
+            <li>After four focus sessions, take a longer 15-minute break (Long Break).</li>
         </ul>
 
-        <h2>WHY IT WORKS</h2>
+        <h2>Why it works</h2>
         <p>By breaking your work into manageable chunks, you reduce mental fatigue and procrastination. The strict time limits create a sense of urgency, while the regular breaks prevent burnout and keep your mind fresh.</p>
 
-        <a href="/" class="back-link">[ &lt;&lt; RETURN TO TIMER ]</a>
-    </div>
+        <a href="/" class="btn-back">Return to Timer</a>
+    </main>
 </body>
 </html>

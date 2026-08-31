@@ -5,42 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Core SEO Meta Tags -->
-    <title>Pomodoro CyberDeck — Free Online Focus Timer</title>
-    <meta name="description" content="Increase your productivity with our free online 8-bit styled Pomodoro timer. 25-minute focus sessions, 5-minute breaks. No ads, no tracking, just pure focus.">
-    <meta name="keywords" content="pomodoro timer, online timer, focus timer, productivity tool, 25 minute timer, work timer">
+    <title>Pomodoro — Focus Timer</title>
+    <meta name="description" content="A minimal Pomodoro timer to boost your productivity. 25-minute focus sessions, 5-minute breaks. No ads, no tracking.">
 
-    <!-- Open Graph / Social Media Meta Tags -->
+    <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Pomodoro CyberDeck — Free Online Focus Timer">
-    <meta property="og:description" content="A stylish 8-bit themed Pomodoro timer to boost your productivity.">
+    <meta property="og:title" content="Pomodoro — Focus Timer">
+    <meta property="og:description" content="A clean, minimal Pomodoro timer to boost your productivity.">
     <meta property="og:url" content="https://{{ domain }}/">
 
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Pomodoro CyberDeck — Free Online Focus Timer">
-    <meta name="twitter:description" content="A stylish 8-bit themed Pomodoro timer to boost your productivity.">
-
-    <!-- Structured Data (JSON-LD) -->
+    <!-- Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "Pomodoro CyberDeck",
+      "name": "Pomodoro Timer",
       "url": "https://{{ domain }}/",
-      "description": "Free online 8-bit styled Pomodoro timer to increase productivity.",
+      "description": "Clean, minimal Pomodoro timer to increase productivity.",
       "applicationCategory": "UtilityApplication",
       "operatingSystem": "Web"
     }
     </script>
 
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-    <!-- PWA Manifest -->
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#0a0a12">
+    <meta name="theme-color" content="#f0f2f5">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     {% if umami_id %}
     <script defer src="{{ umami_url }}/script.js" data-website-id="{{ umami_id }}"></script>
@@ -53,43 +46,45 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        .feedback-widget { position: fixed; bottom: 20px; right: 20px; z-index: 50; font-family: 'VT323', monospace; }
+        /* Feedback Widget Pastel Style */
+        .feedback-widget { position: fixed; bottom: 24px; right: 24px; z-index: 50; font-family: 'Inter', sans-serif; }
         .feedback-toggle-btn {
-            background: #0a0a12; border: 2px solid #00ffcc; color: #00ffcc;
-            padding: 8px 16px; cursor: pointer; font-size: 16px; text-transform: uppercase; letter-spacing: 2px;
-            box-shadow: 4px 4px 0px #ff00ff; transition: all 0.1s;
+            background: #fcfcfe; border: 1px solid rgba(60, 60, 80, 0.08); color: #495057;
+            padding: 10px 18px; cursor: pointer; font-size: 13px; font-weight: 500;
+            border-radius: 12px; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(60, 60, 80, 0.05);
         }
-        .feedback-toggle-btn:hover { background: #00ffcc; color: #0a0a12; transform: translate(2px, 2px); box-shadow: 2px 2px 0px #ff00ff; }
+        .feedback-toggle-btn:hover { background: #f8f9fa; color: #343a40; }
         .feedback-form {
-            display: none; margin-top: 20px; background: #0a0a12; border: 2px solid #ff00ff;
-            padding: 16px; width: 320px; box-shadow: 4px 4px 0px #00ffcc; flex-direction: column; gap: 12px;
+            display: none; margin-top: 12px; background: #fcfcfe; border: 1px solid rgba(60, 60, 80, 0.08);
+            padding: 20px; width: 300px; box-shadow: 0 10px 30px rgba(60, 60, 80, 0.08); flex-direction: column; gap: 12px;
+            border-radius: 16px;
         }
         .feedback-form.active { display: flex; }
         .feedback-form textarea {
-            width: 100%; height: 90px; background: #050508; border: 1px solid #00ffcc; color: #00ffcc;
-            padding: 10px; font-family: 'VT323', monospace; font-size: 18px; resize: none; box-sizing: border-box;
+            width: 100%; height: 80px; background: #f0f2f5; border: 1px solid rgba(60, 60, 80, 0.08); color: #343a40;
+            padding: 12px; font-family: 'Inter', sans-serif; font-size: 14px; resize: none; box-sizing: border-box;
+            border-radius: 10px; transition: border-color 0.2s;
         }
-        .feedback-form textarea:focus { outline: none; border-color: #ff00ff; box-shadow: 0 0 5px #ff00ff; }
+        .feedback-form textarea:focus { outline: none; border-color: #b0b0bc; }
         .feedback-send-btn {
-            background: #00ffcc; border: none; color: #0a0a12; cursor: pointer; font-family: 'Press Start 2P', cursive;
-            font-size: 12px; padding: 12px; text-transform: uppercase; letter-spacing: 1px;
+            background: #3c3c44; border: none; color: #fcfcfe; cursor: pointer; font-family: 'Inter', sans-serif;
+            font-weight: 600; font-size: 14px; padding: 12px; border-radius: 10px; transition: background 0.2s;
         }
-        .feedback-send-btn:hover { background: #ff00ff; color: #0a0a12; }
+        .feedback-send-btn:hover { background: #4a4a52; }
+        .feedback-send-btn:disabled { background: #adb5bd; cursor: not-allowed; }
     </style>
 </head>
 <body>
-    <div class="crt-overlay"></div>
-
     <main class="pomodoro-card">
         <header class="brand">
             <span class="brand-dot"></span>
-            <h1>25X5.EXE</h1>
+            <h1>Pomodoro</h1>
         </header>
 
         <nav class="mode-tabs" role="tablist">
-            <button class="mode-tab active" data-mode="work">FOCUS</button>
-            <button class="mode-tab" data-mode="short">REBOOT</button>
-            <button class="mode-tab" data-mode="long">SLEEP</button>
+            <button class="mode-tab active" data-mode="work">Focus</button>
+            <button class="mode-tab" data-mode="short">Short Break</button>
+            <button class="mode-tab" data-mode="long">Long Break</button>
         </nav>
 
         <div class="timer-container">
@@ -99,14 +94,15 @@
             </svg>
             <div class="timer-display">
                 <div class="time">25:00</div>
-                <div class="status">&gt; INITIALIZE FOCUS</div>
+                <div class="status">Time to focus</div>
             </div>
         </div>
 
         <div class="controls">
-            <button class="btn btn-start">[ START ]</button>
+            <button class="btn btn-start">Start</button>
             <button class="btn btn-reset" aria-label="Reset timer">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter">
+                <!-- Увеличенный размер иконки 32x32 -->
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
                     <path d="M3 3v5h5"></path>
                 </svg>
@@ -114,22 +110,22 @@
         </div>
 
         <footer class="session-counter">
-            <span class="session-label">CYCLE <span class="session-num">1</span></span>
+            <span class="session-label">Round <span class="session-num">1</span></span>
             <div class="dots" aria-hidden="true">
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
             </div>
-            <a href="/about" style="display:block; margin-top:15px; color:#505070; text-decoration:none; font-size:16px;">[ WHAT IS POMODORO? ]</a>
+            <a href="/about" class="about-link">What is Pomodoro?</a>
         </footer>
     </main>
 
     <div class="feedback-widget">
-        <button id="feedback-toggle" class="feedback-toggle-btn">&gt; REPORT</button>
+        <button id="feedback-toggle" class="feedback-toggle-btn">Feedback</button>
         <div id="feedback-form" class="feedback-form">
-            <textarea id="feedback-text" placeholder="LOG ERROR OR SUGGESTION..."></textarea>
-            <button id="submit-feedback" class="feedback-send-btn">TRANSMIT</button>
+            <textarea id="feedback-text" placeholder="Found a bug? Have a suggestion?"></textarea>
+            <button id="submit-feedback" class="feedback-send-btn">Send</button>
         </div>
     </div>
 
@@ -144,7 +140,6 @@
     </script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
-    <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
