@@ -41,6 +41,9 @@ let intervalId = null;
 let completedSessions = 0;
 let endTime = null;
 
+// Task State
+let tasks = JSON.parse(localStorage.getItem('pomodoro_tasks')) || [];
+
 const $time      = document.querySelector('.time');
 const $status    = document.querySelector('.status');
 const $startBtn  = document.querySelector('.btn-start');
@@ -59,10 +62,22 @@ const $inputWork     = document.getElementById('input-work');
 const $inputShort    = document.getElementById('input-short');
 const $inputLong     = document.getElementById('input-long');
 
+// Tasks DOM
+const $taskInput = document.getElementById('task-input');
+const $addTaskBtn = document.getElementById('add-task-btn');
+const $taskList = document.getElementById('task-list');
+const $tasksToggleBtn = document.querySelector('.btn-tasks');
+const $appContainer = document.querySelector('.app-container');
+
 // Init inputs with current settings
  $inputWork.value = SETTINGS.work;
  $inputShort.value = SETTINGS.short_break;
  $inputLong.value = SETTINGS.long_break;
+
+// Init tasks visibility
+if (localStorage.getItem('pomodoro_tasks_visible') === 'true') {
+    $appContainer.classList.add('tasks-visible');
+}
 
 const RADIUS = $ring.r.baseVal.value;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -83,6 +98,19 @@ function updateDisplay() {
     document.title = `${formatTime(timeLeft)} · ${modeLabel}`;
 }
 
+function updateTimerStatus() {
+    if (currentMode !== 'work') {
+        $status.textContent = MODES[currentMode].label;
+        return;
+    }
+    const activeTask = tasks.find(t => t.active);
+    if (activeTask) {
+        $status.textContent = activeTask.text;
+    } else {
+        $status.textContent = MODES.work.label;
+    }
+}
+
 function setMode(mode) {
     currentMode = mode;
     timeLeft = MODES[mode].duration;
@@ -91,7 +119,6 @@ function setMode(mode) {
     clearInterval(intervalId);
 
     $tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
-    $status.textContent = MODES[mode].label;
 
     document.documentElement.style.setProperty('--accent', MODES[mode].color);
     document.documentElement.style.setProperty('--accent-tint', MODES[mode].tint);
@@ -100,6 +127,7 @@ function setMode(mode) {
     $body.classList.remove('running');
 
     updateDisplay();
+    updateTimerStatus();
 }
 
 function startTimer() {
@@ -160,10 +188,20 @@ function handleComplete() {
         updateDots();
         $sessionNum.textContent = Math.floor(completedSessions / LONG_BREAK_INTERVAL) + 1;
 
+        const activeTask = tasks.find(t => t.active);
+        if (activeTask) {
+            activeTask.pomodoros++;
+            renderTasks();
+
+            if (UMAMI_ENABLED && window.umami) {
+                umami.track('pomodoro_complete', { task: activeTask.text });
+            }
+        }
+
         fetch('/api/log-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mode: 'work' })
+            body: JSON.stringify({ mode: 'work', task: activeTask ? activeTask.text : null })
         }).catch(() => {});
 
         const nextMode = (completedSessions % LONG_BREAK_INTERVAL === 0) ? 'long' : 'short';
@@ -181,6 +219,79 @@ function updateDots() {
     const cycle = completedSessions % LONG_BREAK_INTERVAL || LONG_BREAK_INTERVAL;
     $dots.forEach((dot, i) => dot.classList.toggle('completed', i < cycle));
 }
+
+// --- Task Logic ---
+function saveTasks() {
+    localStorage.setItem('pomodoro_tasks', JSON.stringify(tasks));
+}
+
+function renderTasks() {
+    $taskList.innerHTML = '';
+    tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.active ? 'active' : ''}`;
+        li.dataset.id = task.id;
+
+        li.innerHTML = `
+            <div class="task-content">
+                <span class="task-text">${task.text}</span>
+                <span class="task-pomodoros">${task.pomodoros} 🍅</span>
+            </div>
+            <button class="task-delete" aria-label="Delete task">×</button>
+        `;
+        $taskList.appendChild(li);
+    });
+}
+
+function addTask() {
+    const text = $taskInput.value.trim();
+    if (!text) return;
+
+    const newTask = {
+        id: Date.now(),
+        text: text,
+        pomodoros: 0,
+        active: tasks.length === 0
+    };
+
+    tasks.push(newTask);
+    $taskInput.value = '';
+    saveTasks();
+    renderTasks();
+    updateTimerStatus();
+}
+
+ $taskList.addEventListener('click', (e) => {
+    const item = e.target.closest('.task-item');
+    if (!item) return;
+
+    const id = parseInt(item.dataset.id);
+
+    if (e.target.classList.contains('task-delete')) {
+        tasks = tasks.filter(t => t.id !== id);
+        if (tasks.length > 0 && !tasks.some(t => t.active)) {
+            tasks[0].active = true;
+        }
+        saveTasks();
+        renderTasks();
+        updateTimerStatus();
+    } else {
+        tasks = tasks.map(t => ({ ...t, active: t.id === id }));
+        saveTasks();
+        renderTasks();
+        updateTimerStatus();
+    }
+});
+
+ $addTaskBtn.addEventListener('click', addTask);
+ $taskInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTask();
+});
+
+ $tasksToggleBtn.addEventListener('click', () => {
+    const isVisible = $appContainer.classList.toggle('tasks-visible');
+    localStorage.setItem('pomodoro_tasks_visible', isVisible);
+});
 
 // --- Soft Sound (Tibetan Bowl / Marimba feel via Web Audio API) ---
 let audioCtx = null;
@@ -275,7 +386,10 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
+// Init
+renderTasks();
 updateDisplay();
+updateTimerStatus();
 
 // --- Feedback Widget Logic ---
 const $feedbackToggle = document.getElementById('feedback-toggle');

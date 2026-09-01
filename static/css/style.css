@@ -24,7 +24,7 @@ body {
     align-items: center;
     justify-content: center;
     padding: 24px;
-    overflow: hidden;
+    overflow-x: hidden;
     position: relative;
     -webkit-font-smoothing: antialiased;
     transition: background 0.6s ease;
@@ -41,19 +41,62 @@ body {
     pointer-events: none;
 }
 
-.pomodoro-card {
+/* Fit-content ensures the container is exactly the width of its children */
+.app-container {
     position: relative;
     z-index: 1;
+    display: flex;
+    align-items: stretch;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.pomodoro-card {
+    flex: 0 0 440px;
+    max-width: 100%;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 24px;
     padding: 40px 36px;
-    width: 100%;
-    max-width: 420px;
     box-shadow: 0 10px 40px rgba(60, 60, 80, 0.06);
+    display: flex;
+    flex-direction: column;
     transition: box-shadow 0.5s ease, border-color 0.5s ease;
 }
 
+/* Smooth slide-in for Tasks Panel */
+.tasks-card {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 auto;
+    width: 0;
+    min-width: 0;
+    margin-left: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    background: var(--card-bg);
+    border-radius: 24px;
+    box-shadow: 0 10px 40px rgba(60, 60, 80, 0.06);
+    opacity: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease 0.1s,
+                padding 0.4s ease,
+                border-color 0.4s ease;
+}
+
+.app-container.tasks-visible .tasks-card {
+    width: 340px;
+    margin-left: 24px;
+    padding: 40px 36px;
+    border-color: var(--card-border);
+    opacity: 1;
+}
+
+/* Timer Styles */
 .brand {
     display: flex;
     align-items: center;
@@ -161,12 +204,15 @@ body {
     margin-top: 12px;
     font-weight: 500;
     transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .controls {
     display: flex;
     gap: 12px;
-    margin-bottom: 16px; /* Уменьшено, чтобы панель плотно прилегала */
+    margin-bottom: 16px;
 }
 
 .btn {
@@ -195,7 +241,7 @@ body {
     transform: translateY(-1px);
 }
 
-.btn-reset, .btn-settings {
+.btn-reset, .btn-settings, .btn-tasks {
     width: 60px;
     height: 60px;
     background: #e8ebf0;
@@ -204,7 +250,7 @@ body {
     padding: 0;
 }
 
-.btn-reset:hover, .btn-settings:hover {
+.btn-reset:hover, .btn-settings:hover, .btn-tasks:hover {
     background: #dde0e5;
     color: var(--text-primary);
 }
@@ -269,11 +315,10 @@ body {
     font-size: 14px;
 }
 
-.btn-apply:hover {
-    opacity: 0.9;
-}
+.btn-apply:hover { opacity: 0.9; }
 
 .session-counter {
+    margin-top: auto;
     text-align: center;
     color: var(--text-secondary);
     font-size: 13px;
@@ -295,9 +340,7 @@ body {
     transition: background 0.4s ease;
 }
 
-.dot.completed {
-    background: var(--accent);
-}
+.dot.completed { background: var(--accent); }
 
 .about-link {
     display: block;
@@ -311,8 +354,158 @@ body {
 
 .about-link:hover { opacity: 1; }
 
+/* Tasks Panel Internal Styles */
+.tasks-header h2 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.task-input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+#task-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: #f0f2f5;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#task-input:focus { border-color: var(--accent); }
+
+#add-task-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--text-primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#add-task-btn:hover { opacity: 0.9; }
+
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.task-item:hover { background: #f0f2f5; }
+
+.task-item.active {
+    background: var(--card-bg);
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(60, 60, 80, 0.06);
+}
+
+.task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+}
+
+.task-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.task-item.active .task-text { color: var(--accent); }
+
+.task-pomodoros {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.task-delete {
+    background: none;
+    border: none;
+    color: #adb5bd;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+    padding: 0 0 0 8px;
+}
+
+.task-item:hover .task-delete { opacity: 1; }
+.task-delete:hover { color: #e07a5f; }
+
+/* Responsive Layout */
+@media (max-width: 820px) {
+    .app-container {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 440px;
+    }
+
+    .pomodoro-card {
+        width: 100%;
+        flex: none;
+    }
+
+    .tasks-card {
+        width: 100%;
+        max-width: 440px;
+        margin-left: 0;
+        max-height: 0;
+        padding: 0 36px;
+        border-color: transparent;
+        opacity: 0;
+        transition: max-height 0.4s ease, margin-top 0.4s ease, opacity 0.3s ease, padding 0.4s ease, border-color 0.4s ease;
+    }
+
+    .app-container.tasks-visible .tasks-card {
+        max-height: 500px;
+        margin-top: 24px;
+        padding: 40px 36px;
+        border-color: var(--card-border);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 480px) {
     .pomodoro-card { padding: 32px 24px; }
     .timer-container { width: 240px; height: 240px; }
     .time { font-size: 56px; }
+    .tasks-card { padding: 0 24px; }
+    .app-container.tasks-visible .tasks-card { padding: 32px 24px; }
 }

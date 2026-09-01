@@ -4,17 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Core SEO Meta Tags -->
     <title>Pomodoro — Focus Timer</title>
     <meta name="description" content="Pomodoro timer to boost your productivity. 25-minute focus sessions, 5-minute breaks. No ads, no tracking.">
 
-    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Pomodoro — Focus Timer">
     <meta property="og:description" content="Pomodoro timer to boost your productivity.">
     <meta property="og:url" content="https://{{ domain }}/">
 
-    <!-- Structured Data -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -46,8 +43,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        /* Feedback Widget Pastel Style */
-        .feedback-widget { position: fixed; bottom: 24px; right: 24px; z-index: 50; font-family: 'Inter', sans-serif; }
+        .feedback-widget { position: fixed; bottom: 24px; left: 24px; z-index: 50; font-family: 'Inter', sans-serif; }
         .feedback-toggle-btn {
             background: #fcfcfe; border: 1px solid rgba(60, 60, 80, 0.08); color: #495057;
             padding: 10px 18px; cursor: pointer; font-size: 13px; font-weight: 500;
@@ -55,7 +51,7 @@
         }
         .feedback-toggle-btn:hover { background: #f8f9fa; color: #343a40; }
         .feedback-form {
-            display: none; margin-top: 12px; background: #fcfcfe; border: 1px solid rgba(60, 60, 80, 0.08);
+            display: none; margin-bottom: 12px; background: #fcfcfe; border: 1px solid rgba(60, 60, 80, 0.08);
             padding: 20px; width: 300px; box-shadow: 0 10px 30px rgba(60, 60, 80, 0.08); flex-direction: column; gap: 12px;
             border-radius: 16px;
         }
@@ -75,72 +71,95 @@
     </style>
 </head>
 <body>
-    <main class="pomodoro-card">
-        <header class="brand">
-            <span class="brand-dot"></span>
-            <h1>Pomodoro</h1>
-        </header>
+    <div class="app-container">
+        <main class="pomodoro-card">
+            <header class="brand">
+                <span class="brand-dot"></span>
+                <h1>Pomodoro</h1>
+            </header>
 
-        <nav class="mode-tabs" role="tablist">
-            <button class="mode-tab active" data-mode="work">Focus</button>
-            <button class="mode-tab" data-mode="short">Short Break</button>
-            <button class="mode-tab" data-mode="long">Long Break</button>
-        </nav>
+            <nav class="mode-tabs" role="tablist">
+                <button class="mode-tab active" data-mode="work">Focus</button>
+                <button class="mode-tab" data-mode="short">Short Break</button>
+                <button class="mode-tab" data-mode="long">Long Break</button>
+            </nav>
 
-        <div class="timer-container">
-            <svg class="progress-ring" viewBox="0 0 280 280">
-                <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
-                <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
-            </svg>
-            <div class="timer-display">
-                <div class="time">25:00</div>
-                <div class="status">Time to focus</div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button class="btn btn-start">Start</button>
-            <button class="btn btn-reset" aria-label="Reset timer">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
-                    <path d="M3 3v5h5"></path>
+            <div class="timer-container">
+                <svg class="progress-ring" viewBox="0 0 280 280">
+                    <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
+                    <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
                 </svg>
-            </button>
-            <button class="btn btn-settings" aria-label="Settings">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
-            </button>
-        </div>
+                <div class="timer-display">
+                    <div class="time">25:00</div>
+                    <div class="status">Time to focus</div>
+                </div>
+            </div>
 
-        <div class="settings-panel">
-            <div class="settings-row">
-                <label for="input-work">Focus (min)</label>
-                <input type="number" id="input-work" min="1" max="90" value="25">
+            <div class="controls">
+                <button class="btn btn-start">Start</button>
+                <button class="btn btn-reset" aria-label="Reset timer">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                </button>
+                <button class="btn btn-settings" aria-label="Settings">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+                <button class="btn btn-tasks" aria-label="Toggle Tasks">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-            <div class="settings-row">
-                <label for="input-short">Short Break (min)</label>
-                <input type="number" id="input-short" min="1" max="30" value="5">
-            </div>
-            <div class="settings-row">
-                <label for="input-long">Long Break (min)</label>
-                <input type="number" id="input-long" min="1" max="60" value="15">
-            </div>
-            <button class="btn btn-apply">Apply</button>
-        </div>
 
-        <footer class="session-counter">
-            <span class="session-label">Round <span class="session-num">1</span></span>
-            <div class="dots" aria-hidden="true">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
+            <div class="settings-panel">
+                <div class="settings-row">
+                    <label for="input-work">Focus (min)</label>
+                    <input type="number" id="input-work" min="1" max="90" value="25">
+                </div>
+                <div class="settings-row">
+                    <label for="input-short">Short Break (min)</label>
+                    <input type="number" id="input-short" min="1" max="30" value="5">
+                </div>
+                <div class="settings-row">
+                    <label for="input-long">Long Break (min)</label>
+                    <input type="number" id="input-long" min="1" max="60" value="15">
+                </div>
+                <button class="btn btn-apply">Apply</button>
             </div>
-            <a href="/about" class="about-link">What is Pomodoro?</a>
-        </footer>
-    </main>
+
+            <footer class="session-counter">
+                <span class="session-label">Round <span class="session-num">1</span></span>
+                <div class="dots" aria-hidden="true">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <a href="/about" class="about-link">What is Pomodoro?</a>
+            </footer>
+        </main>
+
+        <aside class="tasks-card">
+            <header class="tasks-header">
+                <h2>Tasks</h2>
+            </header>
+            <div class="task-input-group">
+                <input type="text" id="task-input" placeholder="Add a new task...">
+                <button id="add-task-btn" aria-label="Add task">+</button>
+            </div>
+            <ul id="task-list" class="task-list"></ul>
+        </aside>
+    </div>
 
     <div class="feedback-widget">
         <button id="feedback-toggle" class="feedback-toggle-btn">Feedback</button>
@@ -152,6 +171,7 @@
 
     <script>
         const SETTINGS = {{ settings | tojson }};
+        const UMAMI_ENABLED = {{ 'true' if umami_id else 'false' }};
 
         {% if sentry_dsn %}
         if (window.Sentry) {

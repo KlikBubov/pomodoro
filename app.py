@@ -37,8 +37,7 @@ Talisman(app,
              'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
              'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru',
-                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
-                             'https://cdn.jsdelivr.net']
+                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net']
          },
          force_https=not IS_DEBUG
          )
@@ -51,7 +50,6 @@ SETTINGS = {
     "long_break_interval": 4,
 }
 
-# Ensure data directory exists
 os.makedirs("data", exist_ok=True)
 
 UMAMI_URL = os.environ.get("UMAMI_URL", "/umami")
@@ -78,7 +76,6 @@ def about():
 
 @app.route("/robots.txt")
 def robots():
-    # Allow all bots to crawl
     return Response(f"User-agent: *\nAllow: /\nSitemap: https://{DOMAIN}/sitemap.xml", mimetype="text/plain")
 
 
@@ -100,13 +97,24 @@ def sitemap():
     return Response(xml, mimetype="application/xml")
 
 
+@app.route('/static/js/sw.js')
+def service_worker():
+    response = send_from_directory('static/js', 'sw.js')
+    response.headers['Service-Worker-Allowed'] = '/'
+    return response
+
+
 @app.route("/api/log-session", methods=["POST"])
 @limiter.limit("10 per minute")
 def log_session():
     data = request.get_json(silent=True) or {}
     mode = data.get("mode", "work")
+    task = data.get("task", None)
+
     if mode not in ["work", "short", "long"]:
         return jsonify({"status": "error", "message": "Invalid mode"}), 400
+
+    print(f"[Pomodoro] Session: {mode}, Task: {task}")
     return jsonify({"status": "ok", "mode": mode})
 
 
@@ -123,20 +131,6 @@ def submit_feedback():
         f.write(f"[{datetime.now().isoformat()}] IP: {request.remote_addr} - {message}\n")
 
     return jsonify({"status": "ok", "message": "Feedback received"})
-
-
-# --- Serve Service Worker with Root Scope Permission ---
-@app.route('/static/js/sw.js')
-def service_worker():
-    response = send_from_directory('static/js', 'sw.js')
-    response.headers['Service-Worker-Allowed'] = '/'
-    return response
-
-
-@app.route("/error")
-@limiter.limit("10 per minute")
-def trigger_error():
-    division_by_zero = 1 / 0
 
 
 if __name__ == "__main__":
