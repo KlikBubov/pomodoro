@@ -6,12 +6,12 @@
 
     <!-- Core SEO Meta Tags -->
     <title>Pomodoro — Focus Timer</title>
-    <meta name="description" content="A minimal Pomodoro timer to boost your productivity. 25-minute focus sessions, 5-minute breaks. No ads, no tracking.">
+    <meta name="description" content="Pomodoro timer to boost your productivity. 25-minute focus sessions, 5-minute breaks. No ads, no tracking.">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Pomodoro — Focus Timer">
-    <meta property="og:description" content="A clean, minimal Pomodoro timer to boost your productivity.">
+    <meta property="og:description" content="Pomodoro timer to boost your productivity.">
     <meta property="og:url" content="https://{{ domain }}/">
 
     <!-- Structured Data -->
@@ -21,7 +21,7 @@
       "@type": "WebApplication",
       "name": "Pomodoro Timer",
       "url": "https://{{ domain }}/",
-      "description": "Clean, minimal Pomodoro timer to increase productivity.",
+      "description": "Pomodoro timer to increase productivity.",
       "applicationCategory": "UtilityApplication",
       "operatingSystem": "Web"
     }
@@ -101,12 +101,33 @@
         <div class="controls">
             <button class="btn btn-start">Start</button>
             <button class="btn btn-reset" aria-label="Reset timer">
-                <!-- Увеличенный размер иконки 32x32 -->
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
                     <path d="M3 3v5h5"></path>
                 </svg>
             </button>
+            <button class="btn btn-settings" aria-label="Settings">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="settings-panel">
+            <div class="settings-row">
+                <label for="input-work">Focus (min)</label>
+                <input type="number" id="input-work" min="1" max="90" value="25">
+            </div>
+            <div class="settings-row">
+                <label for="input-short">Short Break (min)</label>
+                <input type="number" id="input-short" min="1" max="30" value="5">
+            </div>
+            <div class="settings-row">
+                <label for="input-long">Long Break (min)</label>
+                <input type="number" id="input-long" min="1" max="60" value="15">
+            </div>
+            <button class="btn btn-apply">Apply</button>
         </div>
 
         <footer class="session-counter">

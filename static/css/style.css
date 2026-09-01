@@ -9,7 +9,7 @@
     --short-color: #81b29a;
     --long-color: #a294c9;
     --accent: var(--work-color);
-    --accent-tint: #fdf4f0; /* Легкий оттенок для режима работы */
+    --accent-tint: #fdf4f0;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17,7 +17,7 @@ html, body { height: 100%; }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--accent-tint); /* Фон страницы принимает цвет оттенка */
+    background: var(--accent-tint);
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
@@ -27,7 +27,7 @@ body {
     overflow: hidden;
     position: relative;
     -webkit-font-smoothing: antialiased;
-    transition: background 0.6s ease; /* Плавный переход цвета фона */
+    transition: background 0.6s ease;
 }
 
 .ambient-glow {
@@ -44,7 +44,7 @@ body {
 .pomodoro-card {
     position: relative;
     z-index: 1;
-    background: var(--card-bg); /* Карточка остается белой */
+    background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 24px;
     padding: 40px 36px;
@@ -166,7 +166,7 @@ body {
 .controls {
     display: flex;
     gap: 12px;
-    margin-bottom: 32px;
+    margin-bottom: 16px; /* Уменьшено, чтобы панель плотно прилегала */
 }
 
 .btn {
@@ -195,7 +195,7 @@ body {
     transform: translateY(-1px);
 }
 
-.btn-reset {
+.btn-reset, .btn-settings {
     width: 60px;
     height: 60px;
     background: #e8ebf0;
@@ -204,9 +204,73 @@ body {
     padding: 0;
 }
 
-.btn-reset:hover {
+.btn-reset:hover, .btn-settings:hover {
     background: #dde0e5;
     color: var(--text-primary);
+}
+
+/* Settings Panel */
+.settings-panel {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin-bottom 0.4s ease;
+    margin-bottom: 0;
+}
+
+.settings-panel.active {
+    max-height: 300px;
+    opacity: 1;
+    margin-bottom: 32px;
+}
+
+.settings-panel.disabled {
+    pointer-events: none;
+    opacity: 0.5 !important;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.settings-row label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.settings-row input {
+    width: 80px;
+    padding: 8px 12px;
+    background: #f0f2f5;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.settings-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.btn-apply {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--text-primary);
+    color: var(--card-bg);
+    font-size: 14px;
+}
+
+.btn-apply:hover {
+    opacity: 0.9;
 }
 
 .session-counter {

@@ -12,6 +12,19 @@ window.onerror = function(message, source, lineno, colno, error) {
     return false;
 };
 
+// Load custom settings from localStorage
+const savedSettings = localStorage.getItem('pomodoro_settings');
+if (savedSettings) {
+    try {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.work) SETTINGS.work = parsed.work;
+        if (parsed.short_break) SETTINGS.short_break = parsed.short_break;
+        if (parsed.long_break) SETTINGS.long_break = parsed.long_break;
+    } catch (e) {
+        localStorage.removeItem('pomodoro_settings');
+    }
+}
+
 const MODES = {
     work:  { duration: SETTINGS.work * 60,        label: 'Time to focus', color: '#e07a5f', tint: '#fdf4f0' },
     short: { duration: SETTINGS.short_break * 60, label: 'Short break',   color: '#81b29a', tint: '#f4f9f6' },
@@ -37,6 +50,19 @@ const $ring      = document.querySelector('.progress-ring-fill');
 const $dots      = document.querySelectorAll('.dot');
 const $sessionNum= document.querySelector('.session-num');
 const $body      = document.body;
+
+// Settings DOM
+const $settingsBtn   = document.querySelector('.btn-settings');
+const $settingsPanel = document.querySelector('.settings-panel');
+const $applyBtn      = document.querySelector('.btn-apply');
+const $inputWork     = document.getElementById('input-work');
+const $inputShort    = document.getElementById('input-short');
+const $inputLong     = document.getElementById('input-long');
+
+// Init inputs with current settings
+ $inputWork.value = SETTINGS.work;
+ $inputShort.value = SETTINGS.short_break;
+ $inputLong.value = SETTINGS.long_break;
 
 const RADIUS = $ring.r.baseVal.value;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -67,7 +93,6 @@ function setMode(mode) {
     $tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.mode === mode));
     $status.textContent = MODES[mode].label;
 
-    // Меняем акцентный цвет и цвет фона карточки
     document.documentElement.style.setProperty('--accent', MODES[mode].color);
     document.documentElement.style.setProperty('--accent-tint', MODES[mode].tint);
 
@@ -86,6 +111,11 @@ function startTimer() {
     isRunning = true;
     $startBtn.textContent = 'Pause';
     $body.classList.add('running');
+
+    // Disable settings during run
+    $settingsPanel.classList.remove('active');
+    $settingsPanel.classList.add('disabled');
+    $settingsBtn.classList.add('disabled');
 
     endTime = Date.now() + (timeLeft * 1000);
 
@@ -108,6 +138,10 @@ function pauseTimer() {
     clearInterval(intervalId);
     $startBtn.textContent = 'Resume';
     $body.classList.remove('running');
+
+    // Enable settings after pause
+    $settingsPanel.classList.remove('disabled');
+    $settingsBtn.classList.remove('disabled');
 }
 
 function resetTimer() {
@@ -137,6 +171,10 @@ function handleComplete() {
     } else {
         setMode('work');
     }
+
+    // Enable settings after completion
+    $settingsPanel.classList.remove('disabled');
+    $settingsBtn.classList.remove('disabled');
 }
 
 function updateDots() {
@@ -187,6 +225,34 @@ function notify(message) {
  $tabs.forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
  $startBtn.addEventListener('click', startTimer);
  $resetBtn.addEventListener('click', resetTimer);
+
+// Settings Listeners
+ $settingsBtn.addEventListener('click', () => {
+    $settingsPanel.classList.toggle('active');
+});
+
+ $applyBtn.addEventListener('click', () => {
+    const newWork = parseInt($inputWork.value) || 25;
+    const newShort = parseInt($inputShort.value) || 5;
+    const newLong = parseInt($inputLong.value) || 15;
+
+    SETTINGS.work = newWork;
+    SETTINGS.short_break = newShort;
+    SETTINGS.long_break = newLong;
+
+    localStorage.setItem('pomodoro_settings', JSON.stringify({
+        work: newWork,
+        short_break: newShort,
+        long_break: newLong
+    }));
+
+    MODES.work.duration = newWork * 60;
+    MODES.short.duration = newShort * 60;
+    MODES.long.duration = newLong * 60;
+
+    resetTimer();
+    $settingsPanel.classList.remove('active');
+});
 
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
