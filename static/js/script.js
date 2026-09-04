@@ -12,6 +12,25 @@ window.onerror = function(message, source, lineno, colno, error) {
     return false;
 };
 
+let currentLang = localStorage.getItem('pomodoro_lang') || 'en';
+
+function applyTranslations() {
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[currentLang] && translations[currentLang][key]) {
+            el.textContent = translations[currentLang][key];
+        }
+    });
+    const placeholders = document.querySelectorAll('[data-i18n-placeholder]');
+    placeholders.forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[currentLang] && translations[currentLang][key]) {
+            el.placeholder = translations[currentLang][key];
+        }
+    });
+}
+
 // Load custom settings from localStorage
 const savedSettings = localStorage.getItem('pomodoro_settings');
 if (savedSettings) {
@@ -26,9 +45,9 @@ if (savedSettings) {
 }
 
 const MODES = {
-    work:  { duration: SETTINGS.work * 60,        label: 'Time to focus', color: '#e07a5f', tint: '#fdf4f0' },
-    short: { duration: SETTINGS.short_break * 60, label: 'Short break',   color: '#81b29a', tint: '#f4f9f6' },
-    long:  { duration: SETTINGS.long_break * 60,  label: 'Long break',    color: '#a294c9', tint: '#f7f5fb' },
+    work:  { duration: SETTINGS.work * 60,        statusKey: 'time_to_focus', tabKey: 'focus', color: '#e07a5f', tint: '#fdf4f0' },
+    short: { duration: SETTINGS.short_break * 60, statusKey: 'short_break_status', tabKey: 'short_break', color: '#81b29a', tint: '#f4f9f6' },
+    long:  { duration: SETTINGS.long_break * 60,  statusKey: 'long_break_status', tabKey: 'long_break', color: '#a294c9', tint: '#f7f5fb' },
 };
 
 const LONG_BREAK_INTERVAL = SETTINGS.long_break_interval;
@@ -41,7 +60,6 @@ let intervalId = null;
 let completedSessions = 0;
 let endTime = null;
 
-// Task State
 let tasks = JSON.parse(localStorage.getItem('pomodoro_tasks')) || [];
 
 const $time      = document.querySelector('.time');
@@ -54,7 +72,6 @@ const $dots      = document.querySelectorAll('.dot');
 const $sessionNum= document.querySelector('.session-num');
 const $body      = document.body;
 
-// Settings DOM
 const $settingsBtn   = document.querySelector('.btn-settings');
 const $settingsPanel = document.querySelector('.settings-panel');
 const $applyBtn      = document.querySelector('.btn-apply');
@@ -62,21 +79,37 @@ const $inputWork     = document.getElementById('input-work');
 const $inputShort    = document.getElementById('input-short');
 const $inputLong     = document.getElementById('input-long');
 
-// Tasks DOM
 const $taskInput = document.getElementById('task-input');
 const $addTaskBtn = document.getElementById('add-task-btn');
 const $taskList = document.getElementById('task-list');
 const $tasksToggleBtn = document.querySelector('.btn-tasks');
 const $appContainer = document.querySelector('.app-container');
+const $langSelector = document.getElementById('lang-selector');
 
-// Init inputs with current settings
  $inputWork.value = SETTINGS.work;
  $inputShort.value = SETTINGS.short_break;
  $inputLong.value = SETTINGS.long_break;
 
-// Init tasks visibility
 if (localStorage.getItem('pomodoro_tasks_visible') === 'true') {
     $appContainer.classList.add('tasks-visible');
+}
+
+if ($langSelector) {
+    $langSelector.value = currentLang;
+    $langSelector.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem('pomodoro_lang', currentLang);
+        applyTranslations();
+        updateTimerStatus();
+        // Update start button text if paused or running
+        if (isRunning) {
+            $startBtn.textContent = translations[currentLang].pause;
+        } else if (timeLeft < MODES[currentMode].duration && timeLeft > 0) {
+            $startBtn.textContent = translations[currentLang].resume;
+        } else {
+            $startBtn.textContent = translations[currentLang].start;
+        }
+    });
 }
 
 const RADIUS = $ring.r.baseVal.value;
@@ -94,20 +127,20 @@ function updateDisplay() {
     $time.textContent = formatTime(timeLeft);
     const progress = (totalTime - timeLeft) / totalTime;
     $ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
-    const modeLabel = currentMode === 'work' ? 'Focus' : 'Break';
+    const modeLabel = translations[currentLang][MODES[currentMode].tabKey];
     document.title = `${formatTime(timeLeft)} · ${modeLabel}`;
 }
 
 function updateTimerStatus() {
     if (currentMode !== 'work') {
-        $status.textContent = MODES[currentMode].label;
+        $status.textContent = translations[currentLang][MODES[currentMode].statusKey];
         return;
     }
     const activeTask = tasks.find(t => t.active);
     if (activeTask) {
         $status.textContent = activeTask.text;
     } else {
-        $status.textContent = MODES.work.label;
+        $status.textContent = translations[currentLang][MODES.work.statusKey];
     }
 }
 
@@ -123,7 +156,7 @@ function setMode(mode) {
     document.documentElement.style.setProperty('--accent', MODES[mode].color);
     document.documentElement.style.setProperty('--accent-tint', MODES[mode].tint);
 
-    $startBtn.textContent = 'Start';
+    $startBtn.textContent = translations[currentLang].start;
     $body.classList.remove('running');
 
     updateDisplay();
@@ -137,10 +170,9 @@ function startTimer() {
     }
 
     isRunning = true;
-    $startBtn.textContent = 'Pause';
+    $startBtn.textContent = translations[currentLang].pause;
     $body.classList.add('running');
 
-    // Disable settings during run
     $settingsPanel.classList.remove('active');
     $settingsPanel.classList.add('disabled');
     $settingsBtn.classList.add('disabled');
@@ -164,24 +196,23 @@ function startTimer() {
 function pauseTimer() {
     isRunning = false;
     clearInterval(intervalId);
-    $startBtn.textContent = 'Resume';
+    $startBtn.textContent = translations[currentLang].resume;
     $body.classList.remove('running');
 
-    // Enable settings after pause
     $settingsPanel.classList.remove('disabled');
     $settingsBtn.classList.remove('disabled');
 }
 
 function resetTimer() {
     pauseTimer();
-    $startBtn.textContent = 'Start';
+    $startBtn.textContent = translations[currentLang].start;
     timeLeft = MODES[currentMode].duration;
     updateDisplay();
 }
 
 function handleComplete() {
     playChime();
-    notify(`Pomodoro: ${currentMode === 'work' ? 'Focus' : 'Break'} session complete`);
+    notify(currentMode === 'work' ? translations[currentLang].focus_complete : translations[currentLang].break_complete);
 
     if (currentMode === 'work') {
         completedSessions++;
@@ -210,7 +241,6 @@ function handleComplete() {
         setMode('work');
     }
 
-    // Enable settings after completion
     $settingsPanel.classList.remove('disabled');
     $settingsBtn.classList.remove('disabled');
 }
@@ -220,7 +250,6 @@ function updateDots() {
     $dots.forEach((dot, i) => dot.classList.toggle('completed', i < cycle));
 }
 
-// --- Task Logic ---
 function saveTasks() {
     localStorage.setItem('pomodoro_tasks', JSON.stringify(tasks));
 }
@@ -293,7 +322,6 @@ function addTask() {
     localStorage.setItem('pomodoro_tasks_visible', isVisible);
 });
 
-// --- Soft Sound (Tibetan Bowl / Marimba feel via Web Audio API) ---
 let audioCtx = null;
 function playChime() {
     try {
@@ -337,7 +365,6 @@ function notify(message) {
  $startBtn.addEventListener('click', startTimer);
  $resetBtn.addEventListener('click', resetTimer);
 
-// Settings Listeners
  $settingsBtn.addEventListener('click', () => {
     $settingsPanel.classList.toggle('active');
 });
@@ -366,7 +393,7 @@ function notify(message) {
 });
 
 document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
     if (e.code === 'Space') { e.preventDefault(); startTimer(); }
     if (e.code === 'KeyR')  { resetTimer(); }
 });
@@ -386,11 +413,6 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-// Init
-renderTasks();
-updateDisplay();
-updateTimerStatus();
-
 // --- Feedback Widget Logic ---
 const $feedbackToggle = document.getElementById('feedback-toggle');
 const $feedbackForm = document.getElementById('feedback-form');
@@ -406,7 +428,7 @@ if ($feedbackToggle) {
         const message = $feedbackText.value.trim();
         if (!message) return;
 
-        $submitFeedbackBtn.textContent = 'Sending...';
+        $submitFeedbackBtn.textContent = '...';
         $submitFeedbackBtn.disabled = true;
 
         try {
@@ -419,19 +441,25 @@ if ($feedbackToggle) {
             if (response.ok) {
                 $feedbackText.value = '';
                 $feedbackForm.classList.remove('active');
-                $feedbackToggle.textContent = 'Thank you ✓';
+                $feedbackToggle.textContent = '✓';
                 setTimeout(() => {
-                    $feedbackToggle.textContent = 'Feedback';
+                    $feedbackToggle.textContent = translations[currentLang].feedback;
                 }, 3000);
             } else {
                 const data = await response.json();
-                alert(data.message || 'Failed to send');
+                alert(data.message || translations[currentLang].failed_to_send);
             }
         } catch (err) {
-            alert('Network error. Please try later.');
+            alert(translations[currentLang].network_error);
         } finally {
-            $submitFeedbackBtn.textContent = 'Send';
+            $submitFeedbackBtn.textContent = translations[currentLang].send;
             $submitFeedbackBtn.disabled = false;
         }
     });
 }
+
+// Initialization
+applyTranslations();
+renderTasks();
+updateDisplay();
+updateTimerStatus();

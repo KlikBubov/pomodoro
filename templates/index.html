@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Pomodoro — Focus Timer</title>
-    <meta name="description" content="Pomodoro timer to boost your productivity. 25-minute focus sessions, 5-minute breaks. No ads, no tracking.">
+    <meta name="description"
+          content="Pomodoro timer to boost your productivity. 25-minute focus sessions, 5-minute breaks. No ads, no tracking.">
 
     <meta property="og:type" content="website">
     <meta property="og:title" content="Pomodoro — Focus Timer">
@@ -13,15 +14,15 @@
     <meta property="og:url" content="https://{{ domain }}/">
 
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Pomodoro Timer",
-      "url": "https://{{ domain }}/",
-      "description": "Pomodoro timer to increase productivity.",
-      "applicationCategory": "UtilityApplication",
-      "operatingSystem": "Web"
-    }
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Pomodoro Timer",
+            "url": "https://{{ domain }}/",
+            "description": "Pomodoro timer to increase productivity.",
+            "applicationCategory": "UtilityApplication",
+            "operatingSystem": "Web"
+        }
     </script>
 
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
@@ -71,123 +72,142 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <main class="pomodoro-card">
-            <header class="brand">
-                <span class="brand-dot"></span>
-                <h1>Pomodoro</h1>
-            </header>
+<div class="app-container">
+    <main class="pomodoro-card">
+        <header class="brand">
+            <span class="brand-dot"></span>
+            <h1 data-i18n="pomodoro">Pomodoro</h1>
+            <select id="lang-selector" class="lang-selector" aria-label="Language">
+                <option value="en">EN</option>
+                <option value="es">ES</option>
+                <option value="ru">RU</option>
+                <option value="pt">PT</option>
+                <option value="de">DE</option>
+                <option value="fr">FR</option>
+                <option value="it">IT</option>
+                <option value="pl">PL</option>
+                <option value="nl">NL</option>
+                <option value="tr">TR</option>
+            </select>
+        </header>
 
-            <nav class="mode-tabs" role="tablist">
-                <button class="mode-tab active" data-mode="work">Focus</button>
-                <button class="mode-tab" data-mode="short">Short Break</button>
-                <button class="mode-tab" data-mode="long">Long Break</button>
-            </nav>
+        <nav class="mode-tabs" role="tablist">
+            <button class="mode-tab active" data-mode="work" data-i18n="focus">Focus</button>
+            <button class="mode-tab" data-mode="short" data-i18n="short_break">Short Break</button>
+            <button class="mode-tab" data-mode="long" data-i18n="long_break">Long Break</button>
+        </nav>
 
-            <div class="timer-container">
-                <svg class="progress-ring" viewBox="0 0 280 280">
-                    <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
-                    <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
-                </svg>
-                <div class="timer-display">
-                    <div class="time">25:00</div>
-                    <div class="status">Time to focus</div>
-                </div>
+        <div class="timer-container">
+            <svg class="progress-ring" viewBox="0 0 280 280">
+                <circle class="progress-ring-bg" cx="140" cy="140" r="130"></circle>
+                <circle class="progress-ring-fill" cx="140" cy="140" r="130"></circle>
+            </svg>
+            <div class="timer-display">
+                <div class="time">25:00</div>
+                <div class="status" data-i18n="time_to_focus">Time to focus</div>
             </div>
-
-            <div class="controls">
-                <button class="btn btn-start">Start</button>
-                <button class="btn btn-reset" aria-label="Reset timer">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
-                        <path d="M3 3v5h5"></path>
-                    </svg>
-                </button>
-                <button class="btn btn-settings" aria-label="Settings">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                </button>
-                <button class="btn btn-tasks" aria-label="Toggle Tasks">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6"></line>
-                        <line x1="8" y1="12" x2="21" y2="12"></line>
-                        <line x1="8" y1="18" x2="21" y2="18"></line>
-                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="settings-panel">
-                <div class="settings-row">
-                    <label for="input-work">Focus (min)</label>
-                    <input type="number" id="input-work" min="1" max="90" value="25">
-                </div>
-                <div class="settings-row">
-                    <label for="input-short">Short Break (min)</label>
-                    <input type="number" id="input-short" min="1" max="30" value="5">
-                </div>
-                <div class="settings-row">
-                    <label for="input-long">Long Break (min)</label>
-                    <input type="number" id="input-long" min="1" max="60" value="15">
-                </div>
-                <button class="btn btn-apply">Apply</button>
-            </div>
-
-            <footer class="session-counter">
-                <span class="session-label">Round <span class="session-num">1</span></span>
-                <div class="dots" aria-hidden="true">
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                </div>
-                <a href="/about" class="about-link">What is Pomodoro?</a>
-            </footer>
-        </main>
-
-        <aside class="tasks-card">
-            <header class="tasks-header">
-                <h2>Tasks</h2>
-            </header>
-            <div class="task-input-group">
-                <input type="text" id="task-input" placeholder="Add a new task...">
-                <button id="add-task-btn" aria-label="Add task">+</button>
-            </div>
-            <ul id="task-list" class="task-list"></ul>
-        </aside>
-    </div>
-
-    <div class="feedback-widget">
-        <button id="feedback-toggle" class="feedback-toggle-btn">Feedback</button>
-        <div id="feedback-form" class="feedback-form">
-            <textarea id="feedback-text" placeholder="Found a bug? Have a suggestion?"></textarea>
-            <button id="submit-feedback" class="feedback-send-btn">Send</button>
         </div>
+
+        <div class="controls">
+            <button class="btn btn-start" data-i18n="start">Start</button>
+            <button class="btn btn-reset" aria-label="Reset timer">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                </svg>
+            </button>
+            <button class="btn btn-settings" aria-label="Settings">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </button>
+            <button class="btn btn-tasks" aria-label="Toggle Tasks">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="settings-panel">
+            <div class="settings-row">
+                <label for="input-work" data-i18n="focus_min">Focus (min)</label>
+                <input type="number" id="input-work" min="1" max="90" value="25">
+            </div>
+            <div class="settings-row">
+                <label for="input-short" data-i18n="short_break_min">Short Break (min)</label>
+                <input type="number" id="input-short" min="1" max="30" value="5">
+            </div>
+            <div class="settings-row">
+                <label for="input-long" data-i18n="long_break_min">Long Break (min)</label>
+                <input type="number" id="input-long" min="1" max="60" value="15">
+            </div>
+            <button class="btn btn-apply" data-i18n="apply">Apply</button>
+        </div>
+
+        <footer class="session-counter">
+            <span class="session-label"><span data-i18n="round">Round</span> <span class="session-num">1</span></span>
+            <div class="dots" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <a href="/about" class="about-link" data-i18n="what_is_pomodoro">What is Pomodoro?</a>
+        </footer>
+    </main>
+
+    <aside class="tasks-card">
+        <header class="tasks-header">
+            <h2 data-i18n="tasks">Tasks</h2>
+        </header>
+        <div class="task-input-group">
+            <input type="text" id="task-input" data-i18n-placeholder="add_task_placeholder"
+                   placeholder="Add a new task...">
+            <button id="add-task-btn" aria-label="Add task">+</button>
+        </div>
+        <ul id="task-list" class="task-list"></ul>
+    </aside>
+</div>
+
+<div class="feedback-widget">
+    <button id="feedback-toggle" class="feedback-toggle-btn" data-i18n="feedback">Feedback</button>
+    <div id="feedback-form" class="feedback-form">
+        <textarea id="feedback-text" data-i18n-placeholder="feedback_placeholder"
+                  placeholder="Found a bug? Have a suggestion?"></textarea>
+        <button id="submit-feedback" class="feedback-send-btn" data-i18n="send">Send</button>
     </div>
+</div>
 
-    <script>
-        const SETTINGS = {{ settings | tojson }};
-        const UMAMI_ENABLED = {{ 'true' if umami_id else 'false' }};
+<script>
+    const SETTINGS = {{ settings | tojson }};
+    const UMAMI_ENABLED = {{ 'true' if umami_id else 'false' }};
 
-        {% if sentry_dsn %}
-        if (window.Sentry) {
-            Sentry.init({ dsn: "{{ sentry_dsn }}" });
-        }
-        {% endif %}
-    </script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% if sentry_dsn %}
+    if (window.Sentry) {
+        Sentry.init({ dsn: "{{ sentry_dsn }}" });
+    }
+    {% endif %}
+</script>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/static/js/sw.js', { scope: '/' })
-                    .catch(err => console.error('SW registration failed:', err));
-            });
-        }
-    </script>
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/static/js/sw.js', { scope: '/' })
+                .catch(err => console.error('SW registration failed:', err));
+        });
+    }
+</script>
 </body>
 </html>

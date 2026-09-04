@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Pomodoro Technique</title>
-    <meta name="description" content="Learn about the Pomodoro Technique and how it boosts productivity. 25 minutes of focus, 5 minutes of break.">
+    <meta name="description"
+          content="Learn about the Pomodoro Technique and how it boosts productivity. 25 minutes of focus, 5 minutes of break.">
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,17 +15,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        /* Разрешаем скролл и выравниваем по верху страницы */
         body {
             overflow-y: auto !important;
             height: auto !important;
             min-height: 100vh;
             align-items: flex-start !important;
             padding: 40px 24px;
-            background: var(--bg-1); /* Статичный спокойный фон */
+            background: var(--bg-1);
         }
 
-        /* Карточка использует те же переменные, что и таймер */
         .about-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
@@ -36,7 +35,6 @@
             box-shadow: 0 10px 40px rgba(60, 60, 80, 0.06);
         }
 
-        /* Заголовки используют глобальные цвета */
         .about-card h1 {
             font-family: 'Inter', sans-serif;
             font-size: 24px;
@@ -57,7 +55,6 @@
             margin-bottom: 16px;
         }
 
-        /* Текст использует глобальный цвет */
         .about-card p {
             font-family: 'Inter', sans-serif;
             font-size: 15px;
@@ -67,7 +64,6 @@
             margin-bottom: 16px;
         }
 
-        /* Список без маркеров, с пастельными точками */
         .about-card ul {
             list-style: none;
             padding: 0;
@@ -93,10 +89,9 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: var(--work-color); /* Пастельная терракотовая точка */
+            background: var(--work-color);
         }
 
-        /* Кнопка возврата в стиле кнопки Start */
         .btn-back {
             display: block;
             width: 100%;
@@ -110,7 +105,7 @@
             background: var(--text-primary);
             border: none;
             border-radius: 12px;
-            text-decoration: none !important; /* Никаких подчеркиваний */
+            text-decoration: none !important;
             transition: opacity 0.2s ease;
             box-sizing: border-box;
         }
@@ -121,24 +116,41 @@
     </style>
 </head>
 <body>
-    <main class="about-card">
-        <h1>The Pomodoro Technique</h1>
+<main class="about-card">
+    <h1 data-i18n="about_title">The Pomodoro Technique</h1>
 
-        <p>The Pomodoro Technique is a time management method developed by Francesco Cirillo in the late 1980s. It uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short breaks.</p>
+    <p data-i18n="about_p1">The Pomodoro Technique is a time management method developed by Francesco Cirillo in the
+        late 1980s. It uses a timer to break work into intervals, traditionally 25 minutes in length, separated by short
+        breaks.</p>
 
-        <h2>How it works</h2>
-        <ul>
-            <li>Choose a task you want to focus on.</li>
-            <li>Set the timer to 25 minutes (Focus mode).</li>
-            <li>Work on the task without interruptions.</li>
-            <li>When the timer rings, take a 5-minute break (Short Break).</li>
-            <li>After four focus sessions, take a longer 15-minute break (Long Break).</li>
-        </ul>
+    <h2 data-i18n="about_h2_how">How it works</h2>
+    <ul>
+        <li data-i18n="about_li1">Choose a task you want to focus on.</li>
+        <li data-i18n="about_li2">Set the timer to 25 minutes (Focus mode).</li>
+        <li data-i18n="about_li3">Work on the task without interruptions.</li>
+        <li data-i18n="about_li4">When the timer rings, take a 5-minute break (Short Break).</li>
+        <li data-i18n="about_li5">After four focus sessions, take a longer 15-minute break (Long Break).</li>
+    </ul>
 
-        <h2>Why it works</h2>
-        <p>By breaking your work into manageable chunks, you reduce mental fatigue and procrastination. The strict time limits create a sense of urgency, while the regular breaks prevent burnout and keep your mind fresh.</p>
+    <h2 data-i18n="about_h2_why">Why it works</h2>
+    <p data-i18n="about_p2">By breaking your work into manageable chunks, you reduce mental fatigue and procrastination.
+        The strict time limits create a sense of urgency, while the regular breaks prevent burnout and keep your mind
+        fresh.</p>
 
-        <a href="/" class="btn-back">Return to Timer</a>
-    </main>
+    <a href="/" class="btn-back" data-i18n="about_back">Return to Timer</a>
+</main>
+
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script>
+    // Apply translations on the About page
+    let currentLang = localStorage.getItem('pomodoro_lang') || 'en';
+    const elements = document.querySelectorAll('[data-i18n]');
+    elements.forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[currentLang] && translations[currentLang][key]) {
+            el.textContent = translations[currentLang][key];
+        }
+    });
+</script>
 </body>
 </html>

@@ -41,7 +41,6 @@ body {
     pointer-events: none;
 }
 
-/* Fit-content ensures the container is exactly the width of its children */
 .app-container {
     position: relative;
     z-index: 1;
@@ -65,7 +64,6 @@ body {
     transition: box-shadow 0.5s ease, border-color 0.5s ease;
 }
 
-/* Smooth slide-in for Tasks Panel */
 .tasks-card {
     display: flex;
     flex-direction: column;
@@ -96,11 +94,9 @@ body {
     opacity: 1;
 }
 
-/* Timer Styles */
 .brand {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
     margin-bottom: 32px;
 }
@@ -119,6 +115,25 @@ body {
     border-radius: 50%;
     background: var(--accent);
     transition: background 0.5s ease;
+}
+
+.lang-selector {
+    margin-left: auto;
+    background: var(--bg-1);
+    border: 1px solid var(--card-border);
+    color: var(--text-secondary);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.lang-selector:hover {
+    border-color: var(--text-secondary);
 }
 
 .mode-tabs {
@@ -255,7 +270,6 @@ body {
     color: var(--text-primary);
 }
 
-/* Settings Panel */
 .settings-panel {
     max-height: 0;
     opacity: 0;
@@ -354,7 +368,6 @@ body {
 
 .about-link:hover { opacity: 1; }
 
-/* Tasks Panel Internal Styles */
 .tasks-header h2 {
     font-size: 15px;
     font-weight: 600;
@@ -468,7 +481,6 @@ body {
 .task-item:hover .task-delete { opacity: 1; }
 .task-delete:hover { color: #e07a5f; }
 
-/* Responsive Layout */
 @media (max-width: 820px) {
     .app-container {
         flex-direction: column;
