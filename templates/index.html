@@ -44,7 +44,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<!-- Top Right Controls -->
 <div class="top-right-controls">
     <select id="lang-selector" class="lang-selector" aria-label="Language">
         <option value="en">EN</option>
@@ -148,7 +147,6 @@
     </aside>
 </div>
 
-<!-- Auth Modal -->
 <div id="auth-modal" class="auth-modal">
     <div class="auth-modal-content">
         <button id="auth-close" class="auth-close" aria-label="Close">&times;</button>
@@ -193,6 +191,25 @@
             <div class="profile-actions">
                 <a href="/me" class="btn btn-stats" data-i18n="view_stats">View Stats</a>
                 <button id="logout-btn" class="btn btn-logout" data-i18n="logout">Logout</button>
+            </div>
+
+            <div class="webhooks-section">
+                <h3 data-i18n="webhooks">Webhooks</h3>
+                <div id="webhook-list" class="webhook-list"></div>
+                <div class="webhook-form">
+                    <input type="url" id="webhook-url" placeholder="https://..." data-i18n-placeholder="webhook_url">
+                    <div class="webhook-events">
+                        <label><input type="checkbox" value="focus_started"> <span
+                                data-i18n="wh_start">Start</span></label>
+                        <label><input type="checkbox" value="focus_completed"> <span
+                                data-i18n="wh_end">End</span></label>
+                        <label><input type="checkbox" value="break_started"> <span data-i18n="wh_break_start">Break Start</span></label>
+                        <label><input type="checkbox" value="break_completed"> <span
+                                data-i18n="wh_break_end">Break End</span></label>
+                    </div>
+                    <button id="add-webhook-btn" class="btn btn-add-webhook" data-i18n="add_webhook">Add Webhook
+                    </button>
+                </div>
             </div>
         </div>
     </div>

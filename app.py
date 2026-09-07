@@ -3,6 +3,9 @@ import sqlite3
 import traceback
 import secrets
 import re
+import json
+import threading
+import requests
 import sentry_sdk
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, g, session, redirect, url_for, Response, send_from_directory
@@ -94,9 +97,10 @@ def init_db():
                   id INTEGER PRIMARY KEY, email TEXT UNIQUE, password_hash TEXT, 
                   work INTEGER DEFAULT 25, short_break INTEGER DEFAULT 5, long_break INTEGER DEFAULT 15, 
                   total_sessions INTEGER DEFAULT 0)''')
-    # Новая таблица для логирования сессий
     db.execute('''CREATE TABLE IF NOT EXISTS sessions_log (
                   id INTEGER PRIMARY KEY, user_id INTEGER, duration INTEGER, timestamp TEXT)''')
+    db.execute('''CREATE TABLE IF NOT EXISTS webhooks (
+                  id INTEGER PRIMARY KEY, user_id INTEGER, url TEXT, events TEXT)''')
     db.commit()
 
 
@@ -108,6 +112,14 @@ def close_db(exception):
 
 with app.app_context():
     init_db()
+
+
+# --- Background Webhook Sender ---
+def send_webhook(url, payload):
+    try:
+        requests.post(url, json=payload, timeout=3)
+    except Exception as e:
+        print(f"Webhook failed for {url}: {e}")
 
 
 # --- Routes ---
@@ -227,12 +239,41 @@ def log_session():
     if current_user.is_authenticated and mode == "work":
         db = get_db()
         db.execute("UPDATE users SET total_sessions = total_sessions + 1 WHERE id = ?", (current_user.id,))
-        # Записываем каждую сессию в лог
         db.execute("INSERT INTO sessions_log (user_id, duration, timestamp) VALUES (?, ?, ?)",
                    (current_user.id, current_user.work, datetime.now().isoformat()))
         db.commit()
 
     return jsonify({"status": "ok", "mode": mode})
+
+
+@app.route("/api/notify", methods=["POST"])
+@login_required
+def notify_event():
+    data = request.get_json(silent=True) or {}
+    event_type = data.get("event")
+    task = data.get("task")
+
+    if event_type not in ["focus_started", "focus_completed", "break_started", "break_completed"]:
+        return jsonify({"status": "error", "message": "Invalid event"}), 400
+
+    db = get_db()
+    hooks = db.execute("SELECT url, events FROM webhooks WHERE user_id = ?", (current_user.id,)).fetchall()
+
+    payload = {
+        "event": event_type,
+        "task": task,
+        "timestamp": datetime.now().isoformat()
+    }
+
+    for hook in hooks:
+        try:
+            events = json.loads(hook["events"])
+            if event_type in events:
+                threading.Thread(target=send_webhook, args=(hook["url"], payload), daemon=True).start()
+        except:
+            pass
+
+    return jsonify({"status": "ok"})
 
 
 @app.route("/api/settings", methods=["POST"])
@@ -250,6 +291,41 @@ def update_settings():
     return jsonify({"status": "ok"})
 
 
+# --- Webhooks API ---
+@app.route("/api/webhooks", methods=["GET", "POST", "DELETE"])
+@login_required
+def manage_webhooks():
+    db = get_db()
+
+    if request.method == "GET":
+        hooks = db.execute("SELECT id, url, events FROM webhooks WHERE user_id = ?", (current_user.id,)).fetchall()
+        return jsonify([{"id": h["id"], "url": h["url"], "events": json.loads(h["events"])} for h in hooks])
+
+    elif request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        url = data.get("url", "").strip()
+        events = data.get("events", [])
+
+        if not url.startswith("http://") and not url.startswith("https://"):
+            return jsonify({"status": "error", "message": "Invalid URL"}), 400
+        if not isinstance(events, list) or not all(
+                e in ["focus_started", "focus_completed", "break_started", "break_completed"] for e in events):
+            return jsonify({"status": "error", "message": "Invalid events"}), 400
+
+        cursor = db.execute("INSERT INTO webhooks (user_id, url, events) VALUES (?, ?, ?)",
+                            (current_user.id, url, json.dumps(events)))
+        db.commit()
+        return jsonify({"status": "ok", "id": cursor.lastrowid})
+
+    elif request.method == "DELETE":
+        hook_id = request.args.get("id")
+        if not hook_id:
+            return jsonify({"status": "error", "message": "ID required"}), 400
+        db.execute("DELETE FROM webhooks WHERE id = ? AND user_id = ?", (hook_id, current_user.id))
+        db.commit()
+        return jsonify({"status": "ok"})
+
+
 # --- Stats API ---
 @app.route("/api/stats")
 @login_required
@@ -261,14 +337,12 @@ def get_stats():
     total_sessions = current_user.total_sessions
     total_minutes = sum([log['duration'] for log in logs])
 
-    # Данные для графика (последние 7 дней)
     daily_data = []
     for i in range(6, -1, -1):
         date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
         minutes = sum([log['duration'] for log in logs if log['timestamp'].startswith(date)])
         daily_data.append({"date": date, "minutes": minutes})
 
-    # Подсчет серии (Streak)
     dates_with_sessions = set()
     for log in logs:
         try:

@@ -120,6 +120,11 @@ const $authSubmitBtn = document.querySelector('.btn-auth-submit');
 const $authTabs = document.getElementById('auth-tabs');
 const $authContent = document.querySelector('.auth-modal-content');
 
+// Webhooks DOM
+const $webhookList = document.getElementById('webhook-list');
+const $webhookUrl = document.getElementById('webhook-url');
+const $addWebhookBtn = document.getElementById('add-webhook-btn');
+
 // --- State Init ---
  $inputWork.value = SETTINGS.work;
  $inputShort.value = SETTINGS.short_break;
@@ -184,6 +189,17 @@ function setMode(mode) {
     updateTimerStatus();
 }
 
+function notifyExternalServices(eventType) {
+    if (!isLoggedIn) return;
+    const activeTask = tasks.find(t => t.active);
+    fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: eventType, task: activeTask ? activeTask.text : null }),
+        credentials: 'same-origin'
+    }).catch(() => {});
+}
+
 function startTimer() {
     if (isRunning) {
         pauseTimer();
@@ -199,6 +215,10 @@ function startTimer() {
     $settingsBtn.classList.add('disabled');
 
     endTime = Date.now() + (timeLeft * 1000);
+
+    // Notify Webhooks
+    const eventType = currentMode === 'work' ? 'focus_started' : 'break_started';
+    notifyExternalServices(eventType);
 
     intervalId = setInterval(() => {
         const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
@@ -235,7 +255,9 @@ function handleComplete() {
     playChime();
     notify(currentMode === 'work' ? translations[currentLang].focus_complete : translations[currentLang].break_complete);
 
-    if (currentMode === 'work') {
+    const completedMode = currentMode; // Store before changing
+
+    if (completedMode === 'work') {
         completedSessions++;
         updateDots();
         $sessionNum.textContent = Math.floor(completedSessions / LONG_BREAK_INTERVAL) + 1;
@@ -269,6 +291,10 @@ function handleComplete() {
     } else {
         setMode('work');
     }
+
+    // Notify Webhooks
+    const eventType = completedMode === 'work' ? 'focus_completed' : 'break_completed';
+    notifyExternalServices(eventType);
 
     $settingsPanel.classList.remove('disabled');
     $settingsBtn.classList.remove('disabled');
@@ -397,7 +423,6 @@ function updateProfileUI(data) {
         const pomodoros = data.total_sessions || 0;
         document.getElementById('stat-pomodoros').textContent = pomodoros;
 
-        // Calculate Time Focused
         const workMin = data.settings?.work || 25;
         const totalMinutes = pomodoros * workMin;
         const hours = Math.floor(totalMinutes / 60);
@@ -408,6 +433,8 @@ function updateProfileUI(data) {
         $authProfile.style.display = 'block';
         $authTabs.style.display = 'none';
         $authContent.classList.add('logged-in');
+
+        fetchWebhooks();
     } else {
         isLoggedIn = false;
         $authProfile.style.display = 'none';
@@ -416,6 +443,69 @@ function updateProfileUI(data) {
         $authContent.classList.remove('logged-in');
     }
 }
+
+// --- Webhooks Logic ---
+async function fetchWebhooks() {
+    try {
+        const res = await fetch('/api/webhooks', { credentials: 'same-origin' });
+        const hooks = await res.json();
+        renderWebhooks(hooks);
+    } catch (e) {
+        console.error("Failed to fetch webhooks", e);
+    }
+}
+
+function renderWebhooks(hooks) {
+    $webhookList.innerHTML = '';
+    if (hooks.length === 0) {
+        $webhookList.innerHTML = '<div style="text-align:center; color:var(--text-secondary); font-size:12px;">No webhooks added.</div>';
+        return;
+    }
+    hooks.forEach(hook => {
+        const item = document.createElement('div');
+        item.className = 'webhook-item';
+        item.innerHTML = `
+            <span class="webhook-url">${hook.url}</span>
+            <button class="webhook-delete" data-id="${hook.id}">×</button>
+        `;
+        $webhookList.appendChild(item);
+    });
+}
+
+ $addWebhookBtn.addEventListener('click', async () => {
+    const url = $webhookUrl.value.trim();
+    const events = Array.from(document.querySelectorAll('.webhook-events input:checked')).map(cb => cb.value);
+
+    if (!url || events.length === 0) return;
+
+    try {
+        const res = await fetch('/api/webhooks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url, events }),
+            credentials: 'same-origin'
+        });
+        if (res.ok) {
+            $webhookUrl.value = '';
+            document.querySelectorAll('.webhook-events input:checked').forEach(cb => cb.checked = false);
+            fetchWebhooks();
+        }
+    } catch (e) {
+        console.error("Failed to add webhook", e);
+    }
+});
+
+ $webhookList.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('webhook-delete')) {
+        const id = e.target.dataset.id;
+        try {
+            await fetch(`/api/webhooks?id=${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            fetchWebhooks();
+        } catch (err) {
+            console.error("Failed to delete webhook", err);
+        }
+    }
+});
 
 // --- Event Listeners ---
  $tabs.forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
