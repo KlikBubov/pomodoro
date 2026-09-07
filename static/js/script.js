@@ -7,11 +7,13 @@ window.onerror = function(message, source, lineno, colno, error) {
     fetch('/api/log-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(errorData)
+        body: JSON.stringify(errorData),
+        credentials: 'same-origin'
     }).catch(() => {});
     return false;
 };
 
+// --- i18n Logic ---
 let currentLang = localStorage.getItem('pomodoro_lang') || 'en';
 
 function applyTranslations() {
@@ -29,9 +31,25 @@ function applyTranslations() {
             el.placeholder = translations[currentLang][key];
         }
     });
+
+    if (isRunning) {
+        $startBtn.textContent = translations[currentLang].pause;
+    } else if (timeLeft < MODES[currentMode].duration && timeLeft > 0) {
+        $startBtn.textContent = translations[currentLang].resume;
+    } else {
+        $startBtn.textContent = translations[currentLang].start;
+    }
+
+    if (authMode === 'login') {
+        $authSubmitBtn.textContent = translations[currentLang].login;
+    } else {
+        $authSubmitBtn.textContent = translations[currentLang].register;
+    }
+
+    updateTimerStatus();
 }
 
-// Load custom settings from localStorage
+// --- Settings Logic ---
 const savedSettings = localStorage.getItem('pomodoro_settings');
 if (savedSettings) {
     try {
@@ -60,8 +78,10 @@ let intervalId = null;
 let completedSessions = 0;
 let endTime = null;
 
+// --- Task State ---
 let tasks = JSON.parse(localStorage.getItem('pomodoro_tasks')) || [];
 
+// --- DOM References ---
 const $time      = document.querySelector('.time');
 const $status    = document.querySelector('.status');
 const $startBtn  = document.querySelector('.btn-start');
@@ -86,6 +106,21 @@ const $tasksToggleBtn = document.querySelector('.btn-tasks');
 const $appContainer = document.querySelector('.app-container');
 const $langSelector = document.getElementById('lang-selector');
 
+// Auth DOM
+const $authModal = document.getElementById('auth-modal');
+const $profileBtn = document.getElementById('profile-btn');
+const $authClose = document.getElementById('auth-close');
+const $tabLogin = document.getElementById('tab-login');
+const $tabRegister = document.getElementById('tab-register');
+const $authForm = document.getElementById('auth-form');
+const $authProfile = document.getElementById('auth-profile');
+const $authError = document.getElementById('auth-error');
+const $logoutBtn = document.getElementById('logout-btn');
+const $authSubmitBtn = document.querySelector('.btn-auth-submit');
+const $authTabs = document.getElementById('auth-tabs');
+const $authContent = document.querySelector('.auth-modal-content');
+
+// --- State Init ---
  $inputWork.value = SETTINGS.work;
  $inputShort.value = SETTINGS.short_break;
  $inputLong.value = SETTINGS.long_break;
@@ -94,24 +129,10 @@ if (localStorage.getItem('pomodoro_tasks_visible') === 'true') {
     $appContainer.classList.add('tasks-visible');
 }
 
-if ($langSelector) {
-    $langSelector.value = currentLang;
-    $langSelector.addEventListener('change', (e) => {
-        currentLang = e.target.value;
-        localStorage.setItem('pomodoro_lang', currentLang);
-        applyTranslations();
-        updateTimerStatus();
-        // Update start button text if paused or running
-        if (isRunning) {
-            $startBtn.textContent = translations[currentLang].pause;
-        } else if (timeLeft < MODES[currentMode].duration && timeLeft > 0) {
-            $startBtn.textContent = translations[currentLang].resume;
-        } else {
-            $startBtn.textContent = translations[currentLang].start;
-        }
-    });
-}
+let authMode = 'login';
+let isLoggedIn = false;
 
+// --- Timer Functions ---
 const RADIUS = $ring.r.baseVal.value;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
  $ring.style.strokeDasharray = CIRCUMFERENCE;
@@ -232,7 +253,15 @@ function handleComplete() {
         fetch('/api/log-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mode: 'work', task: activeTask ? activeTask.text : null })
+            body: JSON.stringify({ mode: 'work', task: activeTask ? activeTask.text : null }),
+            credentials: 'same-origin'
+        }).then(() => {
+            // Update profile UI live if the modal is open
+            if (isLoggedIn && $authModal.classList.contains('active')) {
+                fetch('/api/auth/status', { credentials: 'same-origin', cache: 'no-store' })
+                    .then(res => res.json())
+                    .then(data => updateProfileUI(data));
+            }
         }).catch(() => {});
 
         const nextMode = (completedSessions % LONG_BREAK_INTERVAL === 0) ? 'long' : 'short';
@@ -250,6 +279,7 @@ function updateDots() {
     $dots.forEach((dot, i) => dot.classList.toggle('completed', i < cycle));
 }
 
+// --- Task Functions ---
 function saveTasks() {
     localStorage.setItem('pomodoro_tasks', JSON.stringify(tasks));
 }
@@ -290,38 +320,7 @@ function addTask() {
     updateTimerStatus();
 }
 
- $taskList.addEventListener('click', (e) => {
-    const item = e.target.closest('.task-item');
-    if (!item) return;
-
-    const id = parseInt(item.dataset.id);
-
-    if (e.target.classList.contains('task-delete')) {
-        tasks = tasks.filter(t => t.id !== id);
-        if (tasks.length > 0 && !tasks.some(t => t.active)) {
-            tasks[0].active = true;
-        }
-        saveTasks();
-        renderTasks();
-        updateTimerStatus();
-    } else {
-        tasks = tasks.map(t => ({ ...t, active: t.id === id }));
-        saveTasks();
-        renderTasks();
-        updateTimerStatus();
-    }
-});
-
- $addTaskBtn.addEventListener('click', addTask);
- $taskInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTask();
-});
-
- $tasksToggleBtn.addEventListener('click', () => {
-    const isVisible = $appContainer.classList.toggle('tasks-visible');
-    localStorage.setItem('pomodoro_tasks_visible', isVisible);
-});
-
+// --- Sound ---
 let audioCtx = null;
 function playChime() {
     try {
@@ -361,6 +360,64 @@ function notify(message) {
     }
 }
 
+// --- Auth Logic ---
+async function checkAuthStatus() {
+    try {
+        const res = await fetch('/api/auth/status', {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        if (data.logged_in) {
+            isLoggedIn = true;
+            localStorage.setItem('pomodoro_settings', JSON.stringify(data.settings));
+            SETTINGS.work = data.settings.work;
+            SETTINGS.short_break = data.settings.short_break;
+            SETTINGS.long_break = data.settings.long_break;
+
+            $inputWork.value = SETTINGS.work;
+            $inputShort.value = SETTINGS.short_break;
+            $inputLong.value = SETTINGS.long_break;
+
+            MODES.work.duration = SETTINGS.work * 60;
+            MODES.short.duration = SETTINGS.short_break * 60;
+            MODES.long.duration = SETTINGS.long_break * 60;
+            resetTimer();
+        }
+    } catch (e) {
+        console.error("Auth check failed", e);
+    }
+}
+
+function updateProfileUI(data) {
+    if (data.logged_in) {
+        isLoggedIn = true;
+        document.getElementById('auth-user-email').textContent = data.email;
+
+        const pomodoros = data.total_sessions || 0;
+        document.getElementById('stat-pomodoros').textContent = pomodoros;
+
+        // Calculate Time Focused
+        const workMin = data.settings?.work || 25;
+        const totalMinutes = pomodoros * workMin;
+        const hours = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        document.getElementById('stat-time').textContent = `${hours}h ${mins}m`;
+
+        $authForm.style.display = 'none';
+        $authProfile.style.display = 'block';
+        $authTabs.style.display = 'none';
+        $authContent.classList.add('logged-in');
+    } else {
+        isLoggedIn = false;
+        $authProfile.style.display = 'none';
+        $authForm.style.display = 'block';
+        $authTabs.style.display = 'flex';
+        $authContent.classList.remove('logged-in');
+    }
+}
+
+// --- Event Listeners ---
  $tabs.forEach(tab => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
  $startBtn.addEventListener('click', startTimer);
  $resetBtn.addEventListener('click', resetTimer);
@@ -369,7 +426,7 @@ function notify(message) {
     $settingsPanel.classList.toggle('active');
 });
 
- $applyBtn.addEventListener('click', () => {
+ $applyBtn.addEventListener('click', async () => {
     const newWork = parseInt($inputWork.value) || 25;
     const newShort = parseInt($inputShort.value) || 5;
     const newLong = parseInt($inputLong.value) || 15;
@@ -390,7 +447,57 @@ function notify(message) {
 
     resetTimer();
     $settingsPanel.classList.remove('active');
+
+    if (isLoggedIn) {
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ work: newWork, short_break: newShort, long_break: newLong }),
+            credentials: 'same-origin'
+        });
+    }
 });
+
+ $taskList.addEventListener('click', (e) => {
+    const item = e.target.closest('.task-item');
+    if (!item) return;
+
+    const id = parseInt(item.dataset.id);
+
+    if (e.target.classList.contains('task-delete')) {
+        tasks = tasks.filter(t => t.id !== id);
+        if (tasks.length > 0 && !tasks.some(t => t.active)) {
+            tasks[0].active = true;
+        }
+        saveTasks();
+        renderTasks();
+        updateTimerStatus();
+    } else {
+        tasks = tasks.map(t => ({ ...t, active: t.id === id }));
+        saveTasks();
+        renderTasks();
+        updateTimerStatus();
+    }
+});
+
+ $addTaskBtn.addEventListener('click', addTask);
+ $taskInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTask();
+});
+
+ $tasksToggleBtn.addEventListener('click', () => {
+    const isVisible = $appContainer.classList.toggle('tasks-visible');
+    localStorage.setItem('pomodoro_tasks_visible', isVisible);
+});
+
+if ($langSelector) {
+    $langSelector.value = currentLang;
+    $langSelector.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem('pomodoro_lang', currentLang);
+        applyTranslations();
+    });
+}
 
 document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -435,7 +542,8 @@ if ($feedbackToggle) {
             const response = await fetch('/api/feedback', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({ message }),
+                credentials: 'same-origin'
             });
 
             if (response.ok) {
@@ -458,8 +566,97 @@ if ($feedbackToggle) {
     });
 }
 
-// Initialization
+// --- Auth Event Listeners ---
+ $profileBtn.addEventListener('click', async () => {
+    $authError.textContent = '';
+    try {
+        const res = await fetch('/api/auth/status', {
+            credentials: 'same-origin',
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        updateProfileUI(data);
+    } catch (e) {
+        updateProfileUI({ logged_in: false });
+    }
+    $authModal.classList.add('active');
+});
+
+ $authClose.addEventListener('click', () => $authModal.classList.remove('active'));
+window.addEventListener('click', (e) => { if (e.target === $authModal) $authModal.classList.remove('active'); });
+
+ $tabLogin.addEventListener('click', () => {
+    authMode = 'login'; $tabLogin.classList.add('active'); $tabRegister.classList.remove('active');
+    $authSubmitBtn.textContent = translations[currentLang].login;
+});
+
+ $tabRegister.addEventListener('click', () => {
+    authMode = 'register'; $tabRegister.classList.add('active'); $tabLogin.classList.remove('active');
+    $authSubmitBtn.textContent = translations[currentLang].register;
+});
+
+ $authForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $authError.textContent = '';
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+
+    $authSubmitBtn.textContent = '...';
+    $authSubmitBtn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/auth/${authMode}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+            credentials: 'same-origin'
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            const statusRes = await fetch('/api/auth/status', { credentials: 'same-origin', cache: 'no-store' });
+            const statusData = await statusRes.json();
+
+            if (statusData.logged_in) {
+                localStorage.setItem('pomodoro_settings', JSON.stringify(statusData.settings));
+                SETTINGS.work = statusData.settings.work;
+                SETTINGS.short_break = statusData.settings.short_break;
+                SETTINGS.long_break = statusData.settings.long_break;
+
+                $inputWork.value = SETTINGS.work;
+                $inputShort.value = SETTINGS.short_break;
+                $inputLong.value = SETTINGS.long_break;
+
+                MODES.work.duration = SETTINGS.work * 60;
+                MODES.short.duration = SETTINGS.short_break * 60;
+                MODES.long.duration = SETTINGS.long_break * 60;
+                resetTimer();
+
+                updateProfileUI(statusData);
+                isLoggedIn = true;
+            } else {
+                $authError.textContent = "Session error";
+            }
+        } else {
+            $authError.textContent = data.message || 'Error';
+        }
+    } catch (err) {
+        $authError.textContent = translations[currentLang].network_error;
+    } finally {
+        $authSubmitBtn.disabled = false;
+        $authSubmitBtn.textContent = translations[currentLang][authMode];
+    }
+});
+
+ $logoutBtn.addEventListener('click', async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    updateProfileUI({ logged_in: false });
+    isLoggedIn = false;
+});
+
+// --- Initialization ---
 applyTranslations();
 renderTasks();
 updateDisplay();
 updateTimerStatus();
+checkAuthStatus();

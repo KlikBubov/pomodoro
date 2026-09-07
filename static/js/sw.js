@@ -1,10 +1,11 @@
-const CACHE_NAME = '25x5-cache-v3'; // Увеличьте версию, чтобы старый кэш сбросился
+const CACHE_NAME = '25x5-cache-v4'; // Увеличьте версию, чтобы старый кэш сбросился
 const urlsToCache = [
   '/',
   '/static/css/style.css',
   '/static/js/script.js',
+  '/static/js/i18n.js',
   '/static/favicon.svg',
-  'https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
 self.addEventListener('install', event => {
@@ -32,13 +33,13 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Игнорируем запросы от расширений браузера
+  // 1. Игнорируем не-http(s) запросы (расширения браузера)
   if (!event.request.url.startsWith('http')) {
     return;
   }
 
-  // Игнорируем POST/PUT/DELETE запросы (Cache API поддерживает только GET)
-  if (event.request.method !== 'GET') {
+  // 2. Игнорируем API-запросы и POST/PUT/DELETE (они всегда должны идти в сеть)
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
   }
 
@@ -49,7 +50,7 @@ self.addEventListener('fetch', event => {
           return response; // Возвращаем из кэша, если найдено
         }
 
-        // Иначе идем в сеть и кэшируем результат
+        // Идем в сеть и кэшируем статику
         return fetch(event.request).then(networkResponse => {
           if (!networkResponse || (networkResponse.status !== 200 && networkResponse.type !== 'opaque')) {
             return networkResponse;
