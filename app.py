@@ -4,7 +4,7 @@ import traceback
 import secrets
 import re
 import sentry_sdk
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, g, session, redirect, url_for, Response, send_from_directory
 from flask_talisman import Talisman
 from flask_limiter import Limiter
@@ -63,8 +63,8 @@ Talisman(app,
              'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru',
                              'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net']
          },
-         force_https=False,  # Nginx handles HTTPS redirects
-         session_cookie_secure=False  # Allow cookies over HTTP for local testing
+         force_https=False,
+         session_cookie_secure=False
          )
 
 SETTINGS = {"work": 25, "short_break": 5, "long_break": 15, "long_break_interval": 4}
@@ -94,6 +94,9 @@ def init_db():
                   id INTEGER PRIMARY KEY, email TEXT UNIQUE, password_hash TEXT, 
                   work INTEGER DEFAULT 25, short_break INTEGER DEFAULT 5, long_break INTEGER DEFAULT 15, 
                   total_sessions INTEGER DEFAULT 0)''')
+    # Новая таблица для логирования сессий
+    db.execute('''CREATE TABLE IF NOT EXISTS sessions_log (
+                  id INTEGER PRIMARY KEY, user_id INTEGER, duration INTEGER, timestamp TEXT)''')
     db.commit()
 
 
@@ -117,6 +120,12 @@ def index():
 @app.route("/about")
 def about():
     return render_template("about.html", domain=DOMAIN)
+
+
+@app.route("/me")
+@login_required
+def me():
+    return render_template("me.html", domain=DOMAIN)
 
 
 @app.route("/robots.txt")
@@ -218,6 +227,9 @@ def log_session():
     if current_user.is_authenticated and mode == "work":
         db = get_db()
         db.execute("UPDATE users SET total_sessions = total_sessions + 1 WHERE id = ?", (current_user.id,))
+        # Записываем каждую сессию в лог
+        db.execute("INSERT INTO sessions_log (user_id, duration, timestamp) VALUES (?, ?, ?)",
+                   (current_user.id, current_user.work, datetime.now().isoformat()))
         db.commit()
 
     return jsonify({"status": "ok", "mode": mode})
@@ -236,6 +248,58 @@ def update_settings():
                (work, short_break, long_break, current_user.id))
     db.commit()
     return jsonify({"status": "ok"})
+
+
+# --- Stats API ---
+@app.route("/api/stats")
+@login_required
+def get_stats():
+    db = get_db()
+    logs = db.execute("SELECT duration, timestamp FROM sessions_log WHERE user_id = ? ORDER BY timestamp DESC",
+                      (current_user.id,)).fetchall()
+
+    total_sessions = current_user.total_sessions
+    total_minutes = sum([log['duration'] for log in logs])
+
+    # Данные для графика (последние 7 дней)
+    daily_data = []
+    for i in range(6, -1, -1):
+        date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
+        minutes = sum([log['duration'] for log in logs if log['timestamp'].startswith(date)])
+        daily_data.append({"date": date, "minutes": minutes})
+
+    # Подсчет серии (Streak)
+    dates_with_sessions = set()
+    for log in logs:
+        try:
+            dates_with_sessions.add(datetime.fromisoformat(log['timestamp']).date())
+        except:
+            pass
+
+    streak = 0
+    today = datetime.now().date()
+
+    if today in dates_with_sessions:
+        streak = 1
+        prev_day = today - timedelta(days=1)
+        while prev_day in dates_with_sessions:
+            streak += 1
+            prev_day -= timedelta(days=1)
+    else:
+        yesterday = today - timedelta(days=1)
+        if yesterday in dates_with_sessions:
+            streak = 1
+            prev_day = yesterday - timedelta(days=1)
+            while prev_day in dates_with_sessions:
+                streak += 1
+                prev_day -= timedelta(days=1)
+
+    return jsonify({
+        "total_sessions": total_sessions,
+        "total_minutes": total_minutes,
+        "streak": streak,
+        "daily_data": daily_data
+    })
 
 
 @app.route("/api/feedback", methods=["POST"])

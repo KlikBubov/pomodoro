@@ -155,3 +155,26 @@ body {
     .pomodoro-card { padding: 32px 24px; } .timer-container { width: 240px; height: 240px; } .time { font-size: 56px; }
     .tasks-card { padding: 0 24px; } .app-container.tasks-visible .tasks-card { padding: 32px 24px; }
 }
+
+/* Profile Actions */
+.profile-actions {
+    display: flex;
+    gap: 12px;
+}
+.btn-stats {
+    flex: 1;
+    padding: 14px;
+    background: var(--text-primary);
+    color: var(--card-bg);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+.btn-stats:hover { opacity: 0.9; }
+.btn-logout { flex: 0.5; }

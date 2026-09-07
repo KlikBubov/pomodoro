@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Statistics — Pomodoro</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+            align-items: flex-start !important;
+            padding: 40px 24px;
+            background: var(--bg-1);
+            color: var(--text-primary);
+        }
+        .stats-container {
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(60, 60, 80, 0.06);
+            box-sizing: border-box;
+        }
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .stats-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .back-link {
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 10px 16px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+        .back-link:hover { color: var(--text-primary); background: #f0f2f5; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--work-color);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-card {
+            background: #f8f9fa;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        .chart-card h2 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        @media (max-width: 500px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="stats-container">
+    <div class="stats-header">
+        <h1>My Statistics</h1>
+        <a href="/" class="back-link">&larr; Back to Timer</a>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="stat-total-time">0h 0m</div>
+            <div class="stat-label">Total Focused</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-total-sessions">0</div>
+            <div class="stat-label">Pomodoros</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-label">Day Streak</div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <h2>Last 7 Days Focus Time</h2>
+        <div class="chart-container">
+            <canvas id="focusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/stats', { credentials: 'same-origin', cache: 'no-store' });
+            if (!res.ok) {
+                window.location.href = '/';
+                return;
+            }
+            const data = await res.json();
+
+            // Update cards
+            const hours = Math.floor(data.total_minutes / 60);
+            const mins = data.total_minutes % 60;
+            document.getElementById('stat-total-time').textContent = `${hours}h ${mins}m`;
+            document.getElementById('stat-total-sessions').textContent = data.total_sessions;
+            document.getElementById('stat-streak').textContent = data.streak;
+
+            // Render Chart
+            const ctx = document.getElementById('focusChart').getContext('2d');
+            const labels = data.daily_data.map(d => {
+                const date = new Date(d.date);
+                return date.toLocaleDateString('en-US', { weekday: 'short' });
+            });
+            const minutesData = data.daily_data.map(d => d.minutes);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Minutes Focused',
+                        data: minutesData,
+                        backgroundColor: '#e07a5f',
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(60, 60, 80, 0.05)' },
+                            ticks: { color: '#8e8e9a', font: { family: 'Inter' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#8e8e9a', font: { family: 'Inter' } }
+                        }
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Failed to load stats", e);
+        }
+    }
+    loadStats();
+</script>
+</body>
+</html>
