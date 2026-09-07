@@ -26,9 +26,10 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
     volumes:
-      - ./nginx/conf.d:/etc/nginx/templates:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
+      - ./static:/app/static:ro # <--- Добавить статику для Nginx
     depends_on:
       - pomodoro
 

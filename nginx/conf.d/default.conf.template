@@ -20,6 +20,24 @@ server {
     ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
 
+    # Serve static files directly via Nginx
+    location /static/ {
+        alias /app/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Service Worker should not be cached aggressively
+    location = /static/js/sw.js {
+        alias /app/static/js/sw.js;
+        add_header Service-Worker-Allowed /;
+        expires 0;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        access_log off;
+    }
+
+    # Proxy API and pages to Gunicorn
     location / {
         proxy_pass http://pomodoro:8000;
         proxy_set_header Host $host;
@@ -29,7 +47,7 @@ server {
     }
 }
 
-# Umami (Analytics)
+# Subdomain (Umami Analytics)
 server {
     listen 443 ssl;
     server_name umami.${DOMAIN};
@@ -46,7 +64,7 @@ server {
     }
 }
 
-# Grafana (Dashboards)
+# Subdomain (Grafana Dashboards)
 server {
     listen 443 ssl;
     server_name grafana.${DOMAIN};
@@ -63,7 +81,7 @@ server {
     }
 }
 
-# GlitchTip (Error Tracking)
+# Subdomain (GlitchTip Error Tracking)
 server {
     listen 443 ssl;
     server_name glitchtip.${DOMAIN};
