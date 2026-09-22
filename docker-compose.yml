@@ -29,7 +29,8 @@ services:
       - ./nginx/conf.d:/etc/nginx/templates:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro
-      - ./static:/app/static:ro # <--- Добавить статику для Nginx
+      - ./static:/app/static:ro      
+      - /var/log/pomodoro-nginx:/var/log/nginx
     depends_on:
       - pomodoro
 
