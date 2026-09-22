@@ -2,7 +2,7 @@ services:
   # Main Application
   pomodoro:
     build: .
-    container_name: pomodoro-app
+    container_name: pomodoro
     restart: unless-stopped
     expose:
       - "8000"
