@@ -61,10 +61,11 @@ Talisman(app,
              'default-src': "'self'",
              'style-src': ["'self'", 'https://fonts.googleapis.com', "'unsafe-inline'"],
              'font-src': ["'self'", 'https://fonts.gstatic.com'],
-             'script-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net', 'https://umami.25x5.ru'],
+             'script-src': ["'self'", "'unsafe-inline'", 'https://browser.sentry-cdn.com', 'https://umami.25x5.ru'],
              'img-src': ["'self'", 'data:'],
              'connect-src': ["'self'", 'https://glitchtip.25x5.ru', 'https://umami.25x5.ru',
-                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net']
+                             'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
+                             'https://browser.sentry-cdn.com']
          },
          force_https=False,
          session_cookie_secure=False
