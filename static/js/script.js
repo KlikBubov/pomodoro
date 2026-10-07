@@ -13,6 +13,13 @@ window.onerror = function(message, source, lineno, colno, error) {
     return false;
 };
 
+// --- Umami Analytics Helper ---
+function trackEvent(eventName, props = {}) {
+    if (UMAMI_ENABLED && window.umami) {
+        umami.track(eventName, props);
+    }
+}
+
 // --- i18n Logic ---
 let currentLang = localStorage.getItem('pomodoro_lang') || 'en';
 
@@ -171,6 +178,9 @@ function updateTimerStatus() {
 }
 
 function setMode(mode) {
+    if (mode !== currentMode) {
+        trackEvent('mode_switch', { mode: mode });
+    }
     currentMode = mode;
     timeLeft = MODES[mode].duration;
     totalTime = MODES[mode].duration;
@@ -220,6 +230,8 @@ function startTimer() {
     const eventType = currentMode === 'work' ? 'focus_started' : 'break_started';
     notifyExternalServices(eventType);
 
+    trackEvent('timer_start', { mode: currentMode });
+
     intervalId = setInterval(() => {
         const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
         timeLeft = remaining;
@@ -235,6 +247,8 @@ function startTimer() {
 }
 
 function pauseTimer() {
+    if (!isRunning) return;
+
     isRunning = false;
     clearInterval(intervalId);
     $startBtn.textContent = translations[currentLang].resume;
@@ -242,13 +256,19 @@ function pauseTimer() {
 
     $settingsPanel.classList.remove('disabled');
     $settingsBtn.classList.remove('disabled');
+
+    trackEvent('timer_pause', { mode: currentMode });
 }
 
 function resetTimer() {
+    if (timeLeft === MODES[currentMode].duration) return;
+
     pauseTimer();
     $startBtn.textContent = translations[currentLang].start;
     timeLeft = MODES[currentMode].duration;
     updateDisplay();
+
+    trackEvent('timer_reset', { mode: currentMode });
 }
 
 function handleComplete() {
@@ -266,10 +286,6 @@ function handleComplete() {
         if (activeTask) {
             activeTask.pomodoros++;
             renderTasks();
-
-            if (UMAMI_ENABLED && window.umami) {
-                umami.track('pomodoro_complete', { task: activeTask.text });
-            }
         }
 
         fetch('/api/log-session', {
@@ -292,9 +308,15 @@ function handleComplete() {
         setMode('work');
     }
 
-    // Notify Webhooks
+    // Notify Webhooks & Analytics
     const eventType = completedMode === 'work' ? 'focus_completed' : 'break_completed';
     notifyExternalServices(eventType);
+
+    const activeTask = tasks.find(t => t.active);
+    trackEvent('timer_complete', {
+        mode: completedMode,
+        task: activeTask ? activeTask.text : null
+    });
 
     $settingsPanel.classList.remove('disabled');
     $settingsBtn.classList.remove('disabled');
@@ -344,6 +366,8 @@ function addTask() {
     saveTasks();
     renderTasks();
     updateTimerStatus();
+
+    trackEvent('task_add', { text: text });
 }
 
 // --- Sound ---
@@ -489,6 +513,7 @@ function renderWebhooks(hooks) {
             $webhookUrl.value = '';
             document.querySelectorAll('.webhook-events input:checked').forEach(cb => cb.checked = false);
             fetchWebhooks();
+            trackEvent('webhook_add', { url: url });
         }
     } catch (e) {
         console.error("Failed to add webhook", e);
@@ -501,6 +526,7 @@ function renderWebhooks(hooks) {
         try {
             await fetch(`/api/webhooks?id=${id}`, { method: 'DELETE', credentials: 'same-origin' });
             fetchWebhooks();
+            trackEvent('webhook_delete');
         } catch (err) {
             console.error("Failed to delete webhook", err);
         }
@@ -546,6 +572,8 @@ function renderWebhooks(hooks) {
             credentials: 'same-origin'
         });
     }
+
+    trackEvent('settings_change', { work: newWork, short_break: newShort, long_break: newLong });
 });
 
  $taskList.addEventListener('click', (e) => {
@@ -562,11 +590,13 @@ function renderWebhooks(hooks) {
         saveTasks();
         renderTasks();
         updateTimerStatus();
+        trackEvent('task_delete');
     } else {
         tasks = tasks.map(t => ({ ...t, active: t.id === id }));
         saveTasks();
         renderTasks();
         updateTimerStatus();
+        trackEvent('task_select');
     }
 });
 
@@ -578,6 +608,7 @@ function renderWebhooks(hooks) {
  $tasksToggleBtn.addEventListener('click', () => {
     const isVisible = $appContainer.classList.toggle('tasks-visible');
     localStorage.setItem('pomodoro_tasks_visible', isVisible);
+    trackEvent('tasks_panel_toggle', { visible: isVisible });
 });
 
 if ($langSelector) {
@@ -586,6 +617,7 @@ if ($langSelector) {
         currentLang = e.target.value;
         localStorage.setItem('pomodoro_lang', currentLang);
         applyTranslations();
+        trackEvent('language_change', { lang: currentLang });
     });
 }
 
@@ -643,6 +675,7 @@ if ($feedbackToggle) {
                 setTimeout(() => {
                     $feedbackToggle.textContent = translations[currentLang].feedback;
                 }, 3000);
+                trackEvent('feedback_sent');
             } else {
                 const data = await response.json();
                 alert(data.message || translations[currentLang].failed_to_send);
@@ -724,6 +757,7 @@ window.addEventListener('click', (e) => { if (e.target === $authModal) $authModa
 
                 updateProfileUI(statusData);
                 isLoggedIn = true;
+                trackEvent('auth_success', { type: authMode });
             } else {
                 $authError.textContent = "Session error";
             }
@@ -742,6 +776,7 @@ window.addEventListener('click', (e) => { if (e.target === $authModal) $authModa
     await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
     updateProfileUI({ logged_in: false });
     isLoggedIn = false;
+    trackEvent('logout');
 });
 
 // --- Initialization ---
