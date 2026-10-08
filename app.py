@@ -132,13 +132,13 @@ def index():
 
 @app.route("/about")
 def about():
-    return render_template("about.html", domain=DOMAIN)
+    return render_template("about.html", domain=DOMAIN, umami_url=UMAMI_URL, umami_id=UMAMI_ID)
 
 
 @app.route("/me")
 @login_required
 def me():
-    return render_template("me.html", domain=DOMAIN)
+    return render_template("me.html", domain=DOMAIN, umami_url=UMAMI_URL, umami_id=UMAMI_ID)
 
 
 @app.route("/robots.txt")

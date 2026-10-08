@@ -10,6 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Umami Analytics -->
+    {% if umami_id %}
+    <script defer src="{{ umami_url }}/script.js" data-website-id="{{ umami_id }}"></script>
+    {% endif %}
+
     <style>
         body {
             overflow-y: auto !important;
