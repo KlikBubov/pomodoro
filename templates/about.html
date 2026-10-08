@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
 
     <style>
         body {
@@ -140,7 +140,7 @@
     <a href="/" class="btn-back" data-i18n="about_back">Return to Timer</a>
 </main>
 
-<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/i18n.js') }}?v=2"></script>
 <script>
     // Apply translations on the About page
     let currentLang = localStorage.getItem('pomodoro_lang') || 'en';
