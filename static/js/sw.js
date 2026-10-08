@@ -1,4 +1,4 @@
-const CACHE_NAME = '25x5-cache-v4'; // Увеличьте версию, чтобы старый кэш сбросился
+const CACHE_NAME = '25x5-cache-v5'; // Версия увеличена, чтобы сбросить старый кэш
 const urlsToCache = [
   '/',
   '/static/css/style.css',
@@ -23,7 +23,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+            return caches.delete(cacheName); // Удаляем старые кэши
           }
         })
       );
@@ -33,24 +33,34 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // 1. Игнорируем не-http(s) запросы (расширения браузера)
-  if (!event.request.url.startsWith('http')) {
+  // Игнорируем не-http(s) запросы (расширения браузера)
+  if (!event.request.url.startsWith('http')) return;
+
+  // Игнорируем API-запросы и POST/PUT/DELETE (они всегда должны идти в сеть)
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) return;
+
+  // 1. Network First для HTML-страниц (чтобы получать обновленный HTML сразу)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request)) // Если нет сети, берем из кэша
+    );
     return;
   }
 
-  // 2. Игнорируем API-запросы и POST/PUT/DELETE (они всегда должны идти в сеть)
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
-    return;
-  }
-
+  // 2. Cache First для статики (CSS, JS, шрифты)
   event.respondWith(
     caches.match(event.request)
       .then(response => {
         if (response) {
-          return response; // Возвращаем из кэша, если найдено
+          return response; // Возвращаем из кэша
         }
 
-        // Идем в сеть и кэшируем статику
         return fetch(event.request).then(networkResponse => {
           if (!networkResponse || (networkResponse.status !== 200 && networkResponse.type !== 'opaque')) {
             return networkResponse;
