@@ -59,7 +59,7 @@ services:
 
   # Grafana (Dashboards)
   grafana:
-    image: grafana/grafana:10.4.0
+    image: grafana/grafana:latest
     container_name: pomodoro-grafana
     restart: unless-stopped
     expose:
